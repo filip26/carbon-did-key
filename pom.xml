@@ -62,7 +62,7 @@
 
         <linked-tree.version>0.0.68-SNAPSHOT</linked-tree.version>
         <copper.multicodec.version>1.1.0</copper.multicodec.version>
-        <copper.multibase.version>1.0.0</copper.multibase.version>
+        <copper.multibase.version>4.0.0</copper.multibase.version>
 
         <!-- test resources -->
         <junit.version>5.11.3</junit.version>
