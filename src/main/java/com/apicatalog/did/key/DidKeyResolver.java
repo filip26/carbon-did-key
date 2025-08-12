@@ -1,19 +1,16 @@
 package com.apicatalog.did.key;
 
-import java.net.URI;
 import java.util.Objects;
 
-import com.apicatalog.controller.ControllerDocument;
-import com.apicatalog.controller.method.VerificationMethod;
-import com.apicatalog.controller.resolver.ControllerResolver;
 import com.apicatalog.did.Did;
 import com.apicatalog.did.DidUrl;
-import com.apicatalog.did.document.DidDocument;
+import com.apicatalog.did.document.VerificationMethod;
+import com.apicatalog.did.primitive.ImmutableVerificationMethod;
 import com.apicatalog.did.resolver.DidResolver;
+import com.apicatalog.did.resolver.ResolvedDocument;
 import com.apicatalog.multicodec.MulticodecDecoder;
-import com.apicatalog.multikey.GenericMultikey;
 
-public class DidKeyResolver implements DidResolver, ControllerResolver {
+public class DidKeyResolver implements DidResolver {
 
     protected final MulticodecDecoder codecs;
 
@@ -22,9 +19,9 @@ public class DidKeyResolver implements DidResolver, ControllerResolver {
     }
 
     @Override
-    public DidDocument resolve(final Did did) {
+    public ResolvedDocument resolve(final Did did, final Options options) {
 
-        Objects.nonNull(did);
+        Objects.requireNonNull(did);
         
         if (!DidKey.isDidKey(did)) {
             throw new IllegalArgumentException();
@@ -32,28 +29,28 @@ public class DidKeyResolver implements DidResolver, ControllerResolver {
 
         final DidKey didKey = DidKey.of(did, codecs);
 
-        return DidKeyDocument.of(
-                did != null ? did.toUri() : null,
-                DidKeyResolver.createMethod(didKey));
+        //FIXME
+//        return DidKeyDocument.of(
+//                did,
+//                DidKeyResolver.createMethod(didKey));
+        return null;
     }
 
     public static VerificationMethod createMethod(final DidKey didKey) {
 
-        final URI uri = DidUrl.of(didKey, null, null, didKey.getMethodSpecificId()).toUri();
+        Objects.requireNonNull(didKey);
+        
+        final DidUrl url = DidUrl.of(didKey, null, null, didKey.getMethodSpecificId());
 
-        return GenericMultikey.of(
-                uri,
-                didKey.toUri(),
+        return ImmutableVerificationMethod.of(
+                url,
+                didKey.toString(),
                 didKey);
     }
+//
+//    @Override
+//    public boolean isAccepted(URI id) {
+//        return DidKey.isDidKey(id);
+//    }
 
-    @Override
-    public boolean isAccepted(URI id) {
-        return DidKey.isDidKey(id);
-    }
-
-    @Override
-    public ControllerDocument resolve(URI id) {
-        return resolve(Did.of(id));
-    }
 }
