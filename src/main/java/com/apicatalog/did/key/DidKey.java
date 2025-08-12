@@ -4,6 +4,8 @@ import java.net.URI;
 
 import com.apicatalog.did.Did;
 import com.apicatalog.did.DidUrl;
+import com.apicatalog.did.datatype.MultibaseEncoded;
+import com.apicatalog.did.datatype.MulticodecEncoded;
 import com.apicatalog.multibase.Multibase;
 import com.apicatalog.multicodec.Multicodec;
 import com.apicatalog.multicodec.MulticodecDecoder;
@@ -18,9 +20,9 @@ import com.apicatalog.multicodec.MulticodecDecoder;
  * @see <a href= "https://w3c-ccg.github.io/did-key-spec/">DID Key Method</a>
  *
  */
-public class DidKey extends Did {
+public class DidKey extends Did implements MultibaseEncoded, MulticodecEncoded {
 
-    private static final long serialVersionUID = 1343361455801198884L;
+    private static final long serialVersionUID = 1557847670130252936L;
 
     public static final String METHOD_NAME = "key";
 
@@ -56,7 +58,7 @@ public class DidKey extends Did {
         final Did did = Did.of(uri);
 
         if (!METHOD_NAME.equalsIgnoreCase(did.getMethod())) {
-            throw new IllegalArgumentException("The given URI [" + uri + "] is not valid DID key, does not start with 'did:key'.");
+            throw new IllegalArgumentException("The given URI [" + uri + "] is not valid DID key method, does not start with 'did:key'.");
         }
 
         return of(did, codecs);
@@ -65,7 +67,7 @@ public class DidKey extends Did {
     public static final DidKey of(final Did did, final MulticodecDecoder codecs) {
 
         if (!METHOD_NAME.equalsIgnoreCase(did.getMethod())) {
-            throw new IllegalArgumentException("The given DID method [" + did.getMethod() + "] is not 'key'. DID [" + did.toString() + "].");
+            throw new IllegalArgumentException("The given DID [" + did + "] is not valid DID key method, does not start with 'did:key'.");
         }
 
         final String[] parts = did.getMethodSpecificId().split(":", 2);
@@ -73,6 +75,7 @@ public class DidKey extends Did {
         String version = DEFAULT_VERSION;
         String encoded = parts[0];
 
+        // has a version, length == 1 otherwise
         if (parts.length == 2) {
             version = parts[0];
             encoded = parts[1];
@@ -88,7 +91,7 @@ public class DidKey extends Did {
 
         final byte[] raw = codec.decode(debased);
 
-        return new DidKey(version, encoded, codec, raw);
+        return new DidKey(version, did.getMethodSpecificId(), codec, raw);
     }
 
     public static final DidKey of(byte[] key, Multicodec codec) {
@@ -131,17 +134,27 @@ public class DidKey extends Did {
         return rawKeyBytes;
     }
 
-    /**
-     * Use {@link DidKey#rawKeyBytes()} + {@link DidKey#codec}
-     * 
-     * @return
-     */
-    @Deprecated
-    public byte[] getKey() {
+    public Multibase base() {
+        return Multibase.BASE_58_BTC;
+    }
+
+    @Override
+    public String baseName() {
+        return base().name();
+    }
+
+    @Override
+    public byte[] debased() {
         return codec.encode(rawKeyBytes);
     }
 
-    public Multibase base() {
-        return Multibase.BASE_58_BTC;
+    @Override
+    public byte[] decoded() {
+        return rawKeyBytes;
+    }
+
+    @Override
+    public long codecCode() {
+        return codec.code();
     }
 }

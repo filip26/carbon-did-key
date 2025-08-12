@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.stream.Stream;
 
 import jakarta.json.Json;
+import jakarta.json.JsonReader;
 import jakarta.json.JsonStructure;
 import jakarta.json.JsonValue;
 import jakarta.json.JsonWriter;
@@ -29,7 +30,7 @@ public class TestCase {
                 .filter(name -> name.toString().endsWith(suffix))
                 .sorted()
                 .map(path -> {
-                    try (var reader = Json.createReader(TestCase.class.getResourceAsStream(folder + "/" + path.getFileName().toString()))) {
+                    try (JsonReader reader = Json.createReader(TestCase.class.getResourceAsStream(folder + "/" + path.getFileName().toString()))) {
                         return new Object[] { path.getFileName().toString(), reader.read() };
                     }
                 });
