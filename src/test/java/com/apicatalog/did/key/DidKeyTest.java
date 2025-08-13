@@ -100,7 +100,10 @@ class DidKeyTest {
                 Arguments.of("did:key:1.1:z6MkicdicToW5HbxPP7zZV1H7RHvXgRMhoujWAF2n5WQkdd2",
                         32, "1.1", KeyCodec.ED25519_PUBLIC_KEY),
                 Arguments.of("did:key:0.7:z6MkicdicToW5HbxPP7zZV1H7RHvXgRMhoujWAF2n5WQkdd2",
-                        32, "0.7", KeyCodec.ED25519_PUBLIC_KEY));
+                        32, "0.7", KeyCodec.ED25519_PUBLIC_KEY),
+                Arguments.of("did:key:zUC7DWA2FazpvPXmiXeTWuLjdMGXXmmWXbwoKNo554L3E4PD5ZsoZPqzCvkFkkQGvWp6uLZ3PKQJMfXYzLGNoiMyqXYSQa19cvWTiH3QpzddfRVWW6FtFMWTcvUb7wg4o9khbDt",
+                        96, "1", KeyCodec.BLS12_381_G2_PUBLIC_KEY)
+                );
     }
 
     static Stream<Arguments> negativeVectors() {

@@ -1,6 +1,7 @@
 package com.apicatalog.did.key;
 
 import java.net.URI;
+import java.util.Objects;
 
 import com.apicatalog.did.Did;
 import com.apicatalog.did.DidUrl;
@@ -55,16 +56,16 @@ public class DidKey extends Did implements MultibaseEncoded, MulticodecEncoded {
      */
     public static final DidKey of(final URI uri, final MulticodecDecoder codecs) {
 
-        final Did did = Did.of(uri);
+        Objects.requireNonNull(uri);
+        Objects.requireNonNull(codecs);
 
-        if (!METHOD_NAME.equalsIgnoreCase(did.getMethod())) {
-            throw new IllegalArgumentException("The given URI [" + uri + "] is not valid DID key method, does not start with 'did:key'.");
-        }
-
-        return of(did, codecs);
+        return of(Did.of(uri), codecs);
     }
 
     public static final DidKey of(final Did did, final MulticodecDecoder codecs) {
+
+        Objects.requireNonNull(did);
+        Objects.requireNonNull(codecs);
 
         if (!METHOD_NAME.equalsIgnoreCase(did.getMethod())) {
             throw new IllegalArgumentException("The given DID [" + did + "] is not valid DID key method, does not start with 'did:key'.");
@@ -87,7 +88,8 @@ public class DidKey extends Did implements MultibaseEncoded, MulticodecEncoded {
 
         final byte[] debased = Multibase.BASE_58_BTC.decode(encoded);
 
-        Multicodec codec = codecs.getCodec(debased).orElseThrow(() -> new IllegalArgumentException("Unsupported did:key codec. DID [" + did.toString() + "]."));
+        final Multicodec codec = codecs.getCodec(debased)
+                .orElseThrow(() -> new IllegalArgumentException("Unsupported did:key codec. DID [" + did.toString() + "]."));
 
         final byte[] raw = codec.decode(debased);
 
@@ -95,31 +97,37 @@ public class DidKey extends Did implements MultibaseEncoded, MulticodecEncoded {
     }
 
     public static final DidKey of(byte[] key, Multicodec codec) {
-        return new DidKey(null, Multibase.BASE_58_BTC.encode(key), codec, key);
+        return new DidKey(DEFAULT_VERSION,
+                Multibase.BASE_58_BTC.encode(codec.encode(key)),
+                codec,
+                key);
     }
 
     public static boolean isDidKey(final Did did) {
-        return METHOD_NAME.equalsIgnoreCase(did.getMethod());
+        return did != null && METHOD_NAME.equalsIgnoreCase(did.getMethod());
     }
 
     public static boolean isDidKey(final URI uri) {
-        return Did.isDid(uri)
-                && uri.getSchemeSpecificPart().toLowerCase().startsWith(METHOD_NAME + ":");
+        return uri != null
+                && uri.getRawSchemeSpecificPart().startsWith(METHOD_NAME + ":")
+                && Did.isDid(uri);
     }
 
     public static boolean isDidKey(final String uri) {
-        return Did.isDid(uri)
-                && uri.toLowerCase().startsWith(SCHEME + ":" + METHOD_NAME + ":");
+        return uri != null
+                && uri.startsWith(SCHEME + ":" + METHOD_NAME + ":")
+                && Did.isDid(uri);
     }
 
     public static boolean isDidKeyUrl(final URI uri) {
-        return DidUrl.isDidUrl(uri)
-                && uri.getSchemeSpecificPart().toLowerCase().startsWith(METHOD_NAME + ":");
+        return uri != null
+                && uri.getRawSchemeSpecificPart().startsWith(METHOD_NAME + ":")
+                && DidUrl.isDidUrl(uri);
     }
 
     public static boolean isDidKeyUrl(final String uri) {
         return DidUrl.isDidUrl(uri)
-                && uri.toLowerCase().startsWith(SCHEME + ":" + METHOD_NAME + ":");
+                && uri.startsWith(SCHEME + ":" + METHOD_NAME + ":");
     }
 
     public String version() {

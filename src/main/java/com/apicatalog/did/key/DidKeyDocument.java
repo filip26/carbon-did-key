@@ -10,7 +10,6 @@ import com.apicatalog.did.document.VerificationMethod;
 class DidKeyDocument implements DidDocument {
 
     protected final Did id;
-//    protected final Collection<Did> controller;
     protected final Set<VerificationMethod> method;
 
     protected DidKeyDocument(Did id, Set<VerificationMethod> method) {
@@ -29,6 +28,26 @@ class DidKeyDocument implements DidDocument {
 
     @Override
     public Set<VerificationMethod> verification() {
+        return method;
+    }
+    
+    @Override
+    public Set<VerificationMethod> authentication() {
+        return method;
+    }
+    
+    @Override
+    public Set<VerificationMethod> assertion() {
+        return method;
+    }
+    
+    @Override
+    public Set<VerificationMethod> capabilityInvocation() {
+        return method;
+    }
+    
+    @Override
+    public Set<VerificationMethod> capabilityDelegation() {
         return method;
     }
 }
