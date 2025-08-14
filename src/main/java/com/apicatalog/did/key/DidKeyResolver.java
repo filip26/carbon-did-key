@@ -13,21 +13,22 @@ import com.apicatalog.multicodec.MulticodecDecoder;
 public class DidKeyResolver implements DidResolver {
 
     public static String MULTIKEY_TYPE = "https://w3id.org/security#Multikey";
-    
+
     protected final MulticodecDecoder codecs;
 
-    protected String keyFormat;
+    protected String keyType;
+    protected DidKeyMethodProvider methodProvider;
     protected boolean encryptionKeyDerivation;
 
-    
-    protected DidKeyResolver(final MulticodecDecoder codecs) {        
+    protected DidKeyResolver(final MulticodecDecoder codecs) {
         this.codecs = codecs;
-        this.keyFormat = MULTIKEY_TYPE;
+        this.keyType = MULTIKEY_TYPE;
+        this.methodProvider = DidKeyResolver::multibase;
         this.encryptionKeyDerivation = false;
     }
-    
+
     public static DidKeyResolver with(final MulticodecDecoder codecs) {
-        Objects.requireNonNull(codecs);        
+        Objects.requireNonNull(codecs);
         return new DidKeyResolver(codecs);
     }
 
@@ -39,26 +40,32 @@ public class DidKeyResolver implements DidResolver {
         if (encryptionKeyDerivation) {
             throw new UnsupportedOperationException();
         }
-        
+
         final DidKey didKey = DidKey.of(did, codecs);
 
         return ResolvedDocument.immutable(
                 DidKeyDocument.of(
                         did,
-                        DidKeyResolver.createSignatureMethod(didKey, keyFormat)));
+                        DidKeyResolver.createSignatureMethod(didKey, keyType, methodProvider)));
     }
 
-    public static VerificationMethod createSignatureMethod(final DidKey didKey, final String keyFormat) {
+    public static VerificationMethod multibase(final DidKey key, final DidUrl url, String type) {
+        return ImmutableVerificationMethod.of(
+                url,
+                type,
+                key,
+                key);
+    }
+
+    public static final VerificationMethod createSignatureMethod(final DidKey didKey, final String keyType, final DidKeyMethodProvider method) {
 
         Objects.requireNonNull(didKey);
+        Objects.requireNonNull(keyType);
+        Objects.requireNonNull(method);
 
         final DidUrl url = DidUrl.fragment(didKey, didKey.getMethodSpecificId());
 
-        return ImmutableVerificationMethod.of(
-                url,
-                keyFormat,
-                didKey,
-                didKey);
+        return method.get(didKey, url, keyType);
     }
 
     public boolean encryptionKeyDerivation() {
@@ -69,11 +76,15 @@ public class DidKeyResolver implements DidResolver {
         this.encryptionKeyDerivation = encryptionKeyDerivation;
     }
 
-    public String keyFormat() {
-        return keyFormat;
+    public String keyType() {
+        return keyType;
     }
-    
-    public void keyFormat(String keyFormat) {
-        this.keyFormat = keyFormat;
+
+    public void keyType(String keyType) {
+        this.keyType = keyType;
+    }
+
+    public void methodProvider(DidKeyMethodProvider methodProvider) {
+        this.methodProvider = methodProvider;
     }
 }
