@@ -7,7 +7,7 @@
     <groupId>com.apicatalog</groupId>
     <artifactId>carbon-did-key</artifactId>
 
-	<version>1.0.0</version>
+	<version>0.9.0-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<url>https://github.com/filip26/carbon-did-key</url>
@@ -20,7 +20,8 @@
     <name>Carbon DID Key Method</name>
 
     <description>
-       
+        A DID Method for Static Cryptographic Keys. Multikey support out of the
+        box, JsonWebKey2020 with extension carbon-did-key-jwk
     </description>
 
     <licenses>
@@ -60,7 +61,7 @@
 
         <jakarta.json.version>2.0.1</jakarta.json.version>
 
-        <carbon.did.version>1.0.0-SNAPSHOT</carbon.did.version>
+        <carbon.did.version>0.9.1-SNAPSHOT</carbon.did.version>
 
         <copper.multicodec.version>2.1.0</copper.multicodec.version>
         <copper.multibase.version>4.0.0</copper.multibase.version>
@@ -68,16 +69,8 @@
         <!-- test resources -->
         <junit.version>5.11.3</junit.version>
         <titanium.version>1.4.1</titanium.version>
-
     </properties>
     <dependencies>
-    
-        <dependency>
-            <groupId>jakarta.json</groupId>
-            <artifactId>jakarta.json-api</artifactId>
-            <version>${jakarta.json.version}</version>
-            <scope>provided</scope>
-        </dependency>
         <dependency>
             <groupId>com.apicatalog</groupId>
             <artifactId>carbon-did</artifactId>

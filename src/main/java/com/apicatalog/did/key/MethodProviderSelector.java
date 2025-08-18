@@ -20,6 +20,10 @@ public class MethodProviderSelector implements DidKeyMethodProvider {
 
         final DidKeyMethodProvider provider = providers.get(type);
 
+        if (provider == null) {
+            throw new IllegalArgumentException("Unsupported " + type + ", no method provider is associated with the type.");
+        }
+        
         return provider.get(key, url, type);
     }
 
@@ -41,8 +45,10 @@ public class MethodProviderSelector implements DidKeyMethodProvider {
         }
 
         public DidKeyMethodProvider build() {
+            if (providers.size() == 1) {
+                return providers.values().iterator().next();
+            }
             return new MethodProviderSelector(Collections.unmodifiableMap(providers));
         }
     }
-
 }

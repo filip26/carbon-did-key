@@ -23,7 +23,7 @@ public class DidKeyResolver implements DidResolver {
     protected DidKeyResolver(final MulticodecDecoder codecs) {
         this.codecs = codecs;
         this.keyType = MULTIKEY_TYPE;
-        this.methodProvider = DidKeyResolver::multibase;
+        this.methodProvider = DidKeyResolver::multikey;
         this.encryptionKeyDerivation = false;
     }
 
@@ -49,7 +49,7 @@ public class DidKeyResolver implements DidResolver {
                         DidKeyResolver.createSignatureMethod(didKey, keyType, methodProvider)));
     }
 
-    public static VerificationMethod multibase(final DidKey key, final DidUrl url, String type) {
+    public static VerificationMethod multikey(final DidKey key, final DidUrl url, String type) {
         return ImmutableVerificationMethod.of(
                 url,
                 type,
