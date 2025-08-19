@@ -72,8 +72,6 @@ class DidKeyTest {
         assertTrue(DidKey.isDidKey(didKey));
         assertTrue(DidKey.isDidKey(uri));
         assertTrue(DidKey.isDidKey(URI.create(uri)));
-        assertFalse(DidKey.isDidKeyUrl(uri));
-        assertFalse(DidKey.isDidKeyUrl(URI.create(uri)));
     }
 
     @DisplayName("negative: of(String)")

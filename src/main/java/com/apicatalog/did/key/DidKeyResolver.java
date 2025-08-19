@@ -5,7 +5,8 @@ import java.util.Objects;
 import com.apicatalog.did.Did;
 import com.apicatalog.did.DidUrl;
 import com.apicatalog.did.document.VerificationMethod;
-import com.apicatalog.did.primitive.ImmutableVerificationMethod;
+import com.apicatalog.did.key.jwk.DidKeyJwkMethodProvider;
+import com.apicatalog.did.primitive.ImmutableMultibaseMethod;
 import com.apicatalog.did.resolver.DidResolver;
 import com.apicatalog.did.resolver.ResolvedDocument;
 import com.apicatalog.multicodec.MulticodecDecoder;
@@ -13,23 +14,30 @@ import com.apicatalog.multicodec.MulticodecDecoder;
 public class DidKeyResolver implements DidResolver {
 
     public static String MULTIKEY_TYPE = "https://w3id.org/security#Multikey";
-
+    public static String JWK_2020_TYPE = "https://w3id.org/security#JsonWebKey2020";
+    public static String JWK_TYPE = "https://w3id.org/security#JsonWebKey";
+    
     protected final MulticodecDecoder codecs;
 
     protected String keyType;
     protected DidKeyMethodProvider methodProvider;
     protected boolean encryptionKeyDerivation;
 
-    protected DidKeyResolver(final MulticodecDecoder codecs) {
+    protected DidKeyResolver(final MulticodecDecoder codecs, String keyType, DidKeyMethodProvider methodProvider) {
         this.codecs = codecs;
-        this.keyType = MULTIKEY_TYPE;
-        this.methodProvider = DidKeyResolver::multikey;
+        this.keyType = keyType;
+        this.methodProvider = methodProvider;
         this.encryptionKeyDerivation = false;
     }
 
-    public static DidKeyResolver with(final MulticodecDecoder codecs) {
+    public static DidKeyResolver multikey(final MulticodecDecoder codecs) {
         Objects.requireNonNull(codecs);
-        return new DidKeyResolver(codecs);
+        return new DidKeyResolver(codecs, MULTIKEY_TYPE, DidKeyResolver::multikey);
+    }
+    
+    public static DidKeyResolver jwk(final MulticodecDecoder codecs) {
+        Objects.requireNonNull(codecs);
+        return new DidKeyResolver(codecs, JWK_TYPE, new DidKeyJwkMethodProvider());
     }
 
     @Override
@@ -50,7 +58,7 @@ public class DidKeyResolver implements DidResolver {
     }
 
     public static VerificationMethod multikey(final DidKey key, final DidUrl url, String type) {
-        return ImmutableVerificationMethod.of(
+        return ImmutableMultibaseMethod.of(
                 url,
                 type,
                 key,

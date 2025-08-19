@@ -119,17 +119,6 @@ public class DidKey extends Did implements MultibaseEncoded, MulticodecEncoded {
                 && Did.isDid(uri);
     }
 
-    public static boolean isDidKeyUrl(final URI uri) {
-        return uri != null
-                && uri.getRawSchemeSpecificPart().startsWith(METHOD_NAME + ":")
-                && DidUrl.isDidUrl(uri);
-    }
-
-    public static boolean isDidKeyUrl(final String uri) {
-        return DidUrl.isDidUrl(uri)
-                && uri.startsWith(SCHEME + ":" + METHOD_NAME + ":");
-    }
-
     public String version() {
         return version;
     }

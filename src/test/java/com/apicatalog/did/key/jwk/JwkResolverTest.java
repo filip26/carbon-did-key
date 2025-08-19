@@ -30,9 +30,7 @@ import com.apicatalog.multicodec.MulticodecDecoder;
 class JwkResolverTest {
 
     static MulticodecDecoder CODECS = MulticodecDecoder.getInstance(Tag.Key);
-    static DidKeyResolver RESOLVER = DidKeyResolver.with(CODECS)
-            .keyType(DidKeyJwkMethodProvider.JWK_2020_TYPE)
-            .methodProvider(new DidKeyJwkMethodProvider());
+    static DidKeyResolver RESOLVER = DidKeyResolver.jwk(CODECS);
 
     @DisplayName("resolve()")
     @ParameterizedTest(name = "{0}")
@@ -74,7 +72,7 @@ class JwkResolverTest {
 
         assertNotNull(method);
         assertEquals(DidUrl.fragment(didKey, didKey.getMethodSpecificId()), method.id());
-        assertEquals(DidKeyJwkMethodProvider.JWK_2020_TYPE, method.type());
+        assertEquals(DidKeyResolver.JWK_TYPE, method.type());
         assertEquals(didKey, method.controller());
 
         assertEquals(expected, method.publicKeyJwk());

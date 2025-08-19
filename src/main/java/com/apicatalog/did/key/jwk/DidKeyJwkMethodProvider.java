@@ -19,13 +19,11 @@ import com.apicatalog.did.DidUrl;
 import com.apicatalog.did.document.VerificationMethod;
 import com.apicatalog.did.key.DidKey;
 import com.apicatalog.did.key.DidKeyMethodProvider;
-import com.apicatalog.did.primitive.ImmutableVerificationMethod;
+import com.apicatalog.did.primitive.ImmutableJwkMethod;
 import com.apicatalog.multicodec.Multicodec;
 import com.apicatalog.multicodec.codec.KeyCodec;
 
 public class DidKeyJwkMethodProvider implements DidKeyMethodProvider {
-
-    public static String JWK_2020_TYPE = "https://w3id.org/security#JsonWebKey2020";
 
     static final Encoder BASE64_ENCODER = Base64.getUrlEncoder().withoutPadding();
 
@@ -58,13 +56,11 @@ public class DidKeyJwkMethodProvider implements DidKeyMethodProvider {
             throw new IllegalArgumentException("Curve type " + key.codec() + "is not supported.");
         }
 
-        final Map<String, Object> jwk = provider.get(key);
-
-        return ImmutableVerificationMethod.of(
+        return ImmutableJwkMethod.of(
                 url,
                 type,
                 key,
-                jwk);
+                provider.get(key));
     }
 
     static final Map<String, Object> getJwk(String curveType, DidKey key) {
