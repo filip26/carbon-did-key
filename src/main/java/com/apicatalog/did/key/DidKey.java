@@ -103,7 +103,7 @@ public class DidKey extends Did implements MultibaseEncoded, MulticodecEncoded {
     }
 
     public static boolean isDidKey(final Did did) {
-        return did != null && METHOD_NAME.equalsIgnoreCase(did.getMethod());
+        return did != null && METHOD_NAME.equals(did.getMethod());
     }
 
     public static boolean isDidKey(final URI uri) {
@@ -124,10 +124,6 @@ public class DidKey extends Did implements MultibaseEncoded, MulticodecEncoded {
 
     public Multicodec codec() {
         return codec;
-    }
-
-    public byte[] rawKeyBytes() {
-        return rawKeyBytes;
     }
 
     public Multibase base() {

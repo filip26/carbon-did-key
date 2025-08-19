@@ -67,14 +67,14 @@ public class DidKeyJwkMethodProvider implements DidKeyMethodProvider {
         Map<String, Object> jwk = new LinkedHashMap<>();
         jwk.put("kty", "OKP");
         jwk.put("crv", curveType);
-        jwk.put("x", BASE64_ENCODER.encodeToString(key.rawKeyBytes()));
+        jwk.put("x", BASE64_ENCODER.encodeToString(key.decoded()));
         return Collections.unmodifiableMap(jwk);
     }
 
     static final Map<String, Object> getECJwk(String curve, String curveSpecName, DidKey key, int length) {
 
         try {
-            final ECPoint point = decompress(curveSpecName, key.rawKeyBytes());
+            final ECPoint point = decompress(curveSpecName, key.decoded());
 
             final Map<String, Object> jwk = new LinkedHashMap<>();
             jwk.put("kty", "EC");
