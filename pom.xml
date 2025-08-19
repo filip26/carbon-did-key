@@ -5,22 +5,22 @@
 
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.apicatalog</groupId>
-    <artifactId>carbon-did</artifactId>
+    <artifactId>carbon-did-key</artifactId>
 
-	<version>1.0.0</version>
+	<version>0.9.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
-	<url>https://github.com/filip26/carbon-did</url>
+	<url>https://github.com/filip26/carbon-did-key</url>
 	<scm>
-		<connection>scm:git:git://github.com/filip26/carbon-did.git</connection>
-		<developerConnection>scm:git:git://github.com/filip26/carbon-did.git</developerConnection>
-		<url>https://github.com/filip26/carbon-did/tree/main</url>
+		<connection>scm:git:git://github.com/filip26/carbon-did-key.git</connection>
+		<developerConnection>scm:git:git://github.com/filip26/carbon-did-key.git</developerConnection>
+		<url>https://github.com/filip26/carbon-did-key/tree/main</url>
 	</scm>
 
-    <name>Carbon DIDs</name>
+    <name>Carbon DID Key Method</name>
 
     <description>
-        Decentralized Identifiers (DIDs) API, did:key, Multikey
+        A DID Method for Static Cryptographic Keys. Multikey, JsonWebKey support.
     </description>
 
     <licenses>
@@ -33,7 +33,7 @@
 
 	<issueManagement>
 		<system>github</system>
-		<url>https://github.com/filip26/carbon-did/issues</url>
+		<url>https://github.com/filip26/carbon-did-key/issues</url>
 	</issueManagement>
 
     <developers>
@@ -47,39 +47,29 @@
         </developer>
     </developers>
 
-    <inceptionYear>
-        2022</inceptionYear>
+    <inceptionYear>2022</inceptionYear>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <argLine>-Dfile.encoding=UTF-8</argLine>
 
-        <maven.compiler.target>17</maven.compiler.target>
-        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>1.8</maven.compiler.source>
 
-        <jakarta.json.version>2.0.1</jakarta.json.version>
+        <carbon.did.version>0.9.1-SNAPSHOT</carbon.did.version>
 
-        <linked-tree.version>0.0.68-SNAPSHOT</linked-tree.version>
-        <copper.multicodec.version>1.1.0</copper.multicodec.version>
-        <copper.multibase.version>1.0.0</copper.multibase.version>
+        <copper.multicodec.version>2.1.0</copper.multicodec.version>
+        <copper.multibase.version>4.0.0</copper.multibase.version>
 
         <!-- test resources -->
         <junit.version>5.11.3</junit.version>
-        <titanium.version>1.4.1</titanium.version>
-
     </properties>
     <dependencies>
         <dependency>
-            <groupId>jakarta.json</groupId>
-            <artifactId>jakarta.json-api</artifactId>
-            <version>${jakarta.json.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
             <groupId>com.apicatalog</groupId>
-            <artifactId>linked-tree</artifactId>
-            <version>${linked-tree.version}</version>
+            <artifactId>carbon-did</artifactId>
+            <version>${carbon.did.version}</version>
         </dependency>
         <dependency>
             <groupId>com.apicatalog</groupId>
@@ -99,20 +89,6 @@
             <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.glassfish</groupId>
-            <artifactId>jakarta.json</artifactId>
-            <version>${jakarta.json.version}</version>
-            <scope>test</scope>
-        </dependency>
-        
-        <!-- REMOVE-->
-                <dependency>
-            <groupId>com.apicatalog</groupId>
-            <artifactId>titanium-json-ld</artifactId>
-            <version>${titanium.version}</version>
-        </dependency>
-
     </dependencies>
 
     <build>

@@ -1,6 +1,9 @@
 package com.apicatalog.did.key;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.net.URI;
@@ -13,28 +16,65 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import com.apicatalog.did.Did;
+import com.apicatalog.multibase.Multibase;
+import com.apicatalog.multibase.MultibaseDecoder;
 import com.apicatalog.multicodec.Multicodec;
 import com.apicatalog.multicodec.Multicodec.Tag;
 import com.apicatalog.multicodec.MulticodecDecoder;
 import com.apicatalog.multicodec.codec.KeyCodec;
 
-@DisplayName("DID Key")
+@DisplayName("DID Key Method")
 @TestMethodOrder(OrderAnnotation.class)
 class DidKeyTest {
 
-    MulticodecDecoder CODECS = MulticodecDecoder.getInstance(Tag.Key);
+    static MulticodecDecoder CODECS = MulticodecDecoder.getInstance(Tag.Key);
 
-    @DisplayName("of(String)")
+    @DisplayName("of(DID)")
     @ParameterizedTest(name = "{0}")
-    @MethodSource({ "positiveVectors" })
-    void ofString(URI uri, int keyLength, String version, Multicodec codec) {
-        final DidKey didKey = DidKey.of(uri, CODECS);
-        assertEquals(version, didKey.version());
-        assertEquals(keyLength, didKey.rawBytes().length);
-        assertEquals(codec, didKey.codec());
+    @MethodSource({ "positiveVectors", "versionedKeys" })
+    void ofString(String uri, int keyLength, String version, Multicodec codec) {
+        assertDidKey(DidKey.of(Did.of(uri), CODECS), uri, keyLength, version, codec);
     }
 
-    @DisplayName("!of(String)")
+    @DisplayName("of(URI)")
+    @ParameterizedTest(name = "{0}")
+    @MethodSource({ "positiveVectors", "versionedKeys" })
+    void ofURI(URI uri, int keyLength, String version, Multicodec codec) {
+        assertDidKey(DidKey.of(uri, CODECS), uri.toString(), keyLength, version, codec);
+    }
+
+    @DisplayName("of(byte[], codec)")
+    @ParameterizedTest(name = "{0}")
+    @MethodSource({ "positiveVectors" })
+    void ofBytes(String uri, int keyLength, String version, Multicodec codec) {
+        assertDidKey(DidKey.of(rawBytes(uri), codec), uri, keyLength, version, codec);
+    }
+
+    static void assertDidKey(DidKey didKey, String uri, int keyLength, String version, Multicodec codec) {
+        assertEquals(version, didKey.version());
+        assertEquals(Multibase.BASE_58_BTC, didKey.base());
+        assertEquals(Multibase.BASE_58_BTC.name(), didKey.baseName());
+        assertEquals(codec.code(), didKey.codecCode());
+        assertEquals(codec, didKey.codec());
+
+//        assertEquals( didKey.debased()
+        assertArrayEquals(rawBytes(uri), didKey.decoded());
+        assertEquals("key", didKey.getMethod());
+//        assertEquals(didKey.getMethodSpecificId());
+        assertFalse(didKey.isDidUrl());
+        assertArrayEquals(rawBytes(uri), didKey.rawKeyBytes());
+        assertEquals(uri, didKey.toString());
+
+        assertEquals(URI.create(uri), didKey.toUri());
+
+        assertTrue(didKey.equals(didKey));
+        assertTrue(DidKey.isDidKey(didKey));
+        assertTrue(DidKey.isDidKey(uri));
+        assertTrue(DidKey.isDidKey(URI.create(uri)));
+    }
+
+    @DisplayName("negative: of(String)")
     @ParameterizedTest
     @MethodSource({ "negativeVectors" })
     void ofStringNegative(URI uri, int keyLength, String version) {
@@ -96,7 +136,12 @@ class DidKeyTest {
                 Arguments.of(
                         "did:key:zgghBUVkqmWS8e1ioRVp2WN9Vw6x4NvnE9PGAyQsPqM3fnfPf8EdauiRVfBTcVDyzhqM5FFC7ekAvuV1cJHawtfgB9wDcru1hPDobk3hqyedijhgWmsYfJCmodkiiFnjNWATE7PvqTyoCjcmrc8yMRXmFPnoASyT5beUd4YZxTE9VfgmavcPy3BSouNmASMQ8xUXeiRwjb7xBaVTiDRjkmyPD7NYZdXuS93gFhyDFr5b3XLg7Rfj9nHEqtHDa7NmAX7iwDAbMUFEfiDEf9hrqZmpAYJracAjTTR8Cvn6mnDXMLwayNG8dcsXFodxok2qksYF4D8ffUxMRmyyQVQhhhmdSi4YaMPqTnC1J6HTG9Yfb98yGSVaWi4TApUhLXFow2ZvB6vqckCNhjCRL2R4MDUSk71qzxWHgezKyDeyThJgdxydrn1osqH94oSeA346eipkJvKqYREXBKwgB5VL6WF4qAK6sVZxJp2dQBfCPVZ4EbsBQaJXaVK7cNcWG8tZBFWZ79gG9Cu6C4u8yjBS8Ux6dCcJPUTLtixQu4z2n5dCsVSNdnP1EEs8ZerZo5pBgc68w4Yuf9KL3xVxPnAB1nRCBfs9cMU6oL1EdyHbqrTfnjE8HpY164akBqe92LFVsk8RusaGsVPrMekT8emTq5y8v8CabuZg5rDs3f9NPEtogjyx49wiub1FecM5B7QqEcZSYiKHgF4mfkteT2",
                         526, "1", KeyCodec.RSA_PUBLIC_KEY),
-                // versioned keys
+                Arguments.of("did:key:zUC7DWA2FazpvPXmiXeTWuLjdMGXXmmWXbwoKNo554L3E4PD5ZsoZPqzCvkFkkQGvWp6uLZ3PKQJMfXYzLGNoiMyqXYSQa19cvWTiH3QpzddfRVWW6FtFMWTcvUb7wg4o9khbDt",
+                        96, "1", KeyCodec.BLS12_381_G2_PUBLIC_KEY));
+    }
+
+    static Stream<Arguments> versionedKeys() {
+        return Stream.of(
                 Arguments.of("did:key:1.1:z6MkicdicToW5HbxPP7zZV1H7RHvXgRMhoujWAF2n5WQkdd2",
                         32, "1.1", KeyCodec.ED25519_PUBLIC_KEY),
                 Arguments.of("did:key:0.7:z6MkicdicToW5HbxPP7zZV1H7RHvXgRMhoujWAF2n5WQkdd2",
@@ -117,4 +162,10 @@ class DidKeyTest {
                 Arguments.of("did:key:y", 0, null),
                 Arguments.of("did:key:z6x", 0, null));
     }
+
+    static byte[] rawBytes(String did) {
+        String[] parts = did.split(":");
+        return CODECS.decode(MultibaseDecoder.getInstance().decode(parts[parts.length - 1]));
+    }
+
 }
