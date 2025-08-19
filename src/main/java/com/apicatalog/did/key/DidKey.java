@@ -4,7 +4,6 @@ import java.net.URI;
 import java.util.Objects;
 
 import com.apicatalog.did.Did;
-import com.apicatalog.did.DidUrl;
 import com.apicatalog.did.datatype.MultibaseEncoded;
 import com.apicatalog.did.datatype.MulticodecEncoded;
 import com.apicatalog.multibase.Multibase;
