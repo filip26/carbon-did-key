@@ -26,7 +26,7 @@ import com.apicatalog.multicodec.MulticodecDecoder;
 class MultikeyResolverTest {
 
     static MulticodecDecoder CODECS = MulticodecDecoder.getInstance(Tag.Key);
-    static DidKeyResolver RESOLVER = new DidKeyResolver(CODECS);
+    static DidKeyResolver RESOLVER = DidKeyResolver.with(CODECS);
 
     @DisplayName("resolve()")
     @ParameterizedTest(name = "{0}")

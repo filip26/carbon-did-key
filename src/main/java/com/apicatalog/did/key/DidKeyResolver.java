@@ -72,19 +72,22 @@ public class DidKeyResolver implements DidResolver {
         return this.encryptionKeyDerivation;
     }
 
-    public void encryptionKeyDerivation(boolean encryptionKeyDerivation) {
+    public DidKeyResolver encryptionKeyDerivation(boolean encryptionKeyDerivation) {
         this.encryptionKeyDerivation = encryptionKeyDerivation;
+        return this;
     }
 
     public String keyType() {
         return keyType;
     }
 
-    public void keyType(String keyType) {
+    public DidKeyResolver keyType(String keyType) {
         this.keyType = keyType;
+        return this;
     }
 
-    public void methodProvider(DidKeyMethodProvider methodProvider) {
+    public DidKeyResolver methodProvider(DidKeyMethodProvider methodProvider) {
         this.methodProvider = methodProvider;
+        return this;
     }
 }
