@@ -1,5 +1,8 @@
 package com.apicatalog.did.key;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
 
 import com.apicatalog.did.Did;
@@ -16,7 +19,7 @@ public class DidKeyResolver implements DidResolver {
     public static String MULTIKEY_TYPE = "https://w3id.org/security#Multikey";
     public static String JWK_2020_TYPE = "https://w3id.org/security#JsonWebKey2020";
     public static String JWK_TYPE = "https://w3id.org/security#JsonWebKey";
-    
+
     protected final MulticodecDecoder codecs;
 
     protected String keyType;
@@ -30,14 +33,14 @@ public class DidKeyResolver implements DidResolver {
         this.encryptionKeyDerivation = false;
     }
 
-    public static DidKeyResolver multikey(final MulticodecDecoder codecs) {
+    public static Builder multikey(final MulticodecDecoder codecs) {
         Objects.requireNonNull(codecs);
-        return new DidKeyResolver(codecs, MULTIKEY_TYPE, DidKeyResolver::multikey);
+        return new Builder(codecs, MULTIKEY_TYPE).with(MULTIKEY_TYPE, DidKeyResolver::multikey);
     }
-    
-    public static DidKeyResolver jwk(final MulticodecDecoder codecs) {
+
+    public static Builder jwk(final MulticodecDecoder codecs) {
         Objects.requireNonNull(codecs);
-        return new DidKeyResolver(codecs, JWK_TYPE, new DidKeyJwkMethodProvider());
+        return new Builder(codecs, JWK_TYPE).with(JWK_TYPE, new DidKeyJwkMethodProvider());
     }
 
     @Override
@@ -97,5 +100,36 @@ public class DidKeyResolver implements DidResolver {
     public DidKeyResolver methodProvider(DidKeyMethodProvider methodProvider) {
         this.methodProvider = methodProvider;
         return this;
+    }
+
+    public static class Builder {
+
+        final MulticodecDecoder codecs;
+        final Map<String, DidKeyMethodProvider> providers;
+        final String keyType;
+
+        protected Builder(final MulticodecDecoder codecs, final String keyType) {
+            this.codecs = codecs;
+            this.keyType = keyType;
+            this.providers = new LinkedHashMap<>();
+        }
+
+        public Builder with(String type, DidKeyMethodProvider provider) {
+            providers.put(type, provider);
+            return this;
+        }
+
+        public DidKeyResolver build() {
+
+            final DidKeyMethodProvider provider;
+
+            if (providers.size() == 1) {
+                provider = providers.values().iterator().next();
+            } else {
+                provider = new MethodProviderSelector(Collections.unmodifiableMap(providers));
+            }
+            
+            return new DidKeyResolver(codecs, keyType, provider);
+        }
     }
 }
