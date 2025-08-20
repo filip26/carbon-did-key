@@ -50,13 +50,11 @@ public class DidKeyResolver implements DidResolver {
 
         Objects.requireNonNull(did);
 
-        final DidKey didKey = DidKey.of(did, codecs);
-
-        if (!DidKey.METHOD_NAME.equals(didKey.getMethod())) {
-            throw new DidResolutionException(didKey, Code.UnsupportedMethod);
+        try {
+            return resolve(DidKey.of(did, codecs));
+        } catch (IllegalArgumentException e) {
+            throw new DidResolutionException(did.toASCIIString(), e);
         }
-
-        return resolve(didKey);
     }
 
     @Override
@@ -65,7 +63,7 @@ public class DidKeyResolver implements DidResolver {
         Objects.requireNonNull(did);
 
         if (!DidKey.METHOD_NAME.equals(did.getMethod())) {
-            throw new DidResolutionException(did, Code.UnsupportedMethod);
+            throw new DidResolutionException(did.toString(), Code.UnsupportedMethod);
         }
 
         final DidKey didKey = DidKey.of(did, codecs);
