@@ -28,8 +28,6 @@ public class DidKeyResolver implements DidResolver {
     // supported multicodecs
     protected final MulticodecDecoder codecs;
     protected final Map<String, VerificationMethodProvider> providers;
-
-    // options
     protected boolean encryptionKeyDerivation;
 
     protected DidKeyResolver(final MulticodecDecoder codecs, final Map<String, VerificationMethodProvider> methods) {
