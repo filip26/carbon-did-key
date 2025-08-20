@@ -1,5 +1,6 @@
 package com.apicatalog.did.key;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -45,6 +46,19 @@ public class DidKeyResolver implements DidResolver {
         return new Builder(codecs);
     }
 
+    public ResolvedDidDocument resolve(final URI did) throws DidResolutionException {
+
+        Objects.requireNonNull(did);
+
+        final DidKey didKey = DidKey.of(did, codecs);
+
+        if (!DidKey.METHOD_NAME.equals(didKey.getMethod())) {
+            throw new DidResolutionException(didKey, Code.UnsupportedMethod);
+        }
+
+        return resolve(didKey);
+    }
+
     @Override
     public ResolvedDidDocument resolve(final Did did) throws DidResolutionException {
 
@@ -54,11 +68,18 @@ public class DidKeyResolver implements DidResolver {
             throw new DidResolutionException(did, Code.UnsupportedMethod);
         }
 
+        final DidKey didKey = DidKey.of(did, codecs);
+
+        return resolve(didKey);
+    }
+
+    public ResolvedDidDocument resolve(final DidKey didKey) throws DidResolutionException {
+
+        Objects.requireNonNull(didKey);
+
         if (encryptionKeyDerivation) {
             throw new UnsupportedOperationException();
         }
-
-        final DidKey didKey = DidKey.of(did, codecs);
 
         return ResolvedDidDocument.of(Document.of(didKey, provider.apply(didKey)));
     }

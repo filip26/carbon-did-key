@@ -37,10 +37,7 @@ class MultiResolverTest {
     @ParameterizedTest(name = "{0}")
     @MethodSource({ "vectors" })
     void resolve(URI did, Map<String, Object> expected) throws DidResolutionException {
-
-        final DidKey didKey = DidKey.of(did, CODECS);
-
-        ResolvedDidDocument result = RESOLVER.resolve(didKey);
+        ResolvedDidDocument result = RESOLVER.resolve(did);
         assertNotNull(result);
         assertNull(result.metadata());
         assertNotNull(result.document());
@@ -48,9 +45,11 @@ class MultiResolverTest {
         DidDocument document = result.document();
         assertNotNull(document);
 
+        DidKey didKey = DidKey.of(did, CODECS);
+
         assertEquals(didKey, document.id());
         assertEquals(0, document.controller().size());
-
+        
         assertMethod(document.assertion(), didKey, expected);
         assertMethod(document.authentication(), didKey, expected);
         assertMethod(document.capabilityDelegation(), didKey, expected);
