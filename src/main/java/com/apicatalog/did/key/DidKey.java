@@ -132,7 +132,7 @@ public class DidKey extends Did implements MultibaseEncoded, MulticodecEncoded {
 
     @Override
     public String baseName() {
-        return base().name();
+        return Multibase.BASE_58_BTC.name();
     }
 
     @Override

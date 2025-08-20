@@ -16,54 +16,61 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.apicatalog.did.DidUrl;
-import com.apicatalog.did.document.VerificationMethod;
+import com.apicatalog.did.document.DidVerificationMethod;
 import com.apicatalog.did.key.DidKey;
-import com.apicatalog.did.key.DidKeyMethodProvider;
-import com.apicatalog.did.primitive.ImmutableJwkMethod;
+import com.apicatalog.did.key.VerificationMethodProvider;
 import com.apicatalog.multicodec.Multicodec;
 import com.apicatalog.multicodec.codec.KeyCodec;
 
-public class DidKeyJwkMethodProvider implements DidKeyMethodProvider {
+public class DidKeyJwkMethodProvider implements VerificationMethodProvider {
 
     static final Encoder BASE64_ENCODER = Base64.getUrlEncoder().withoutPadding();
 
-    final Map<Multicodec, DidKeyJwkProvider> jwkProviders;
+    static final DidKeyJwkMethodProvider DEFAULT = with(KeyCodec.ED25519_PUBLIC_KEY, key -> getJwk("Ed25519", key))
+            .with(KeyCodec.BLS12_381_G1_PUBLIC_KEY, key -> getJwk("Bls12381G1", key))
+            .with(KeyCodec.BLS12_381_G2_PUBLIC_KEY, key -> getJwk("Bls12381G2", key))
+            .with(KeyCodec.P256_PUBLIC_KEY, key -> getECJwk("P-256", "secp256r1", key, 32))
+            .with(KeyCodec.P384_PUBLIC_KEY, key -> getECJwk("P-384", "secp384r1", key, 48))
+            .with(KeyCodec.SECP256K1_PUBLIC_KEY, key -> getECJwk("secp256k1", "secp256k1", key, 32))
+            .build();
 
-    protected DidKeyJwkMethodProvider(Map<Multicodec, DidKeyJwkProvider> jwkProviders) {
+    final Map<Multicodec, JwkProvider> jwkProviders;
+
+    protected DidKeyJwkMethodProvider(Map<Multicodec, JwkProvider> jwkProviders) {
         this.jwkProviders = jwkProviders;
     }
 
-    public DidKeyJwkMethodProvider() {
-        this.jwkProviders = new LinkedHashMap<>();
+    public static VerificationMethodProvider getInstance() {
+        return DEFAULT;
+    }
 
-        jwkProviders.put(KeyCodec.ED25519_PUBLIC_KEY, key -> getJwk("Ed25519", key));
+    public static Builder withDefaults() {
+        return (new Builder(new LinkedHashMap<>(DEFAULT.jwkProviders)));
+    }
 
-        jwkProviders.put(KeyCodec.BLS12_381_G1_PUBLIC_KEY, key -> getJwk("Bls12381G1", key));
-        jwkProviders.put(KeyCodec.BLS12_381_G2_PUBLIC_KEY, key -> getJwk("Bls12381G2", key));
-
-        jwkProviders.put(KeyCodec.P256_PUBLIC_KEY, key -> getECJwk("P-256", "secp256r1", key, 32));
-        jwkProviders.put(KeyCodec.P384_PUBLIC_KEY, key -> getECJwk("P-384", "secp384r1", key, 48));
-
-        jwkProviders.put(KeyCodec.SECP256K1_PUBLIC_KEY, key -> getECJwk("secp256k1", "secp256k1", key, 32));
+    public static Builder with(Multicodec codec, JwkProvider provider) {
+        return (new Builder(new LinkedHashMap<>())).with(codec, provider);
     }
 
     @Override
-    public VerificationMethod get(DidKey key, DidUrl url, String type) {
+    public DidVerificationMethod get(DidKey key, String type) {
 
-        final DidKeyJwkProvider provider = jwkProviders.get(key.codec());
+        final JwkProvider provider = jwkProviders.get(key.codec());
 
         if (provider == null) {
             throw new IllegalArgumentException("Curve type " + key.codec() + "is not supported.");
         }
 
-        return ImmutableJwkMethod.of(
-                url,
+        final DidUrl id = DidUrl.fragment(key, key.getMethodSpecificId());
+
+        return DidVerificationMethod.jwk(
+                id,
                 type,
                 key,
                 provider.get(key));
     }
 
-    static final Map<String, Object> getJwk(String curveType, DidKey key) {
+    public static final Map<String, Object> getJwk(String curveType, DidKey key) {
         Map<String, Object> jwk = new LinkedHashMap<>();
         jwk.put("kty", "OKP");
         jwk.put("crv", curveType);
@@ -71,7 +78,7 @@ public class DidKeyJwkMethodProvider implements DidKeyMethodProvider {
         return Collections.unmodifiableMap(jwk);
     }
 
-    static final Map<String, Object> getECJwk(String curve, String curveSpecName, DidKey key, int length) {
+    public static final Map<String, Object> getECJwk(String curve, String curveSpecName, DidKey key, int length) {
 
         try {
             final ECPoint point = decompress(curveSpecName, key.decoded());
@@ -88,7 +95,7 @@ public class DidKeyJwkMethodProvider implements DidKeyMethodProvider {
         }
     }
 
-    static byte[] normalize(byte[] v, int len) {
+    static final byte[] normalize(byte[] v, int len) {
         if (v.length == len)
             return v;
         if (v.length == len + 1 && v[0] == 0)
@@ -98,7 +105,7 @@ public class DidKeyJwkMethodProvider implements DidKeyMethodProvider {
         return out;
     }
 
-    static ECPoint decompress(String curveSpecName, byte[] compressed) throws InvalidParameterSpecException, NoSuchAlgorithmException {
+    static final ECPoint decompress(String curveSpecName, byte[] compressed) throws InvalidParameterSpecException, NoSuchAlgorithmException {
 
         if (compressed.length < 2 || (compressed[0] & 0xFE) != 0x02) {
             throw new IllegalArgumentException("Need compressed point");
@@ -127,7 +134,7 @@ public class DidKeyJwkMethodProvider implements DidKeyMethodProvider {
     }
 
     // Tonelli–Shanks general modular sqrt (handles p ≡ 1 mod 4, e.g. P-384)
-    static BigInteger sqrtMod(BigInteger n, BigInteger p) {
+    static final BigInteger sqrtMod(BigInteger n, BigInteger p) {
         if (n.equals(BigInteger.ZERO)) {
             return BigInteger.ZERO;
         }
@@ -163,5 +170,27 @@ public class DidKeyJwkMethodProvider implements DidKeyMethodProvider {
             r = r.multiply(b).mod(p);
         }
         return r;
+    }
+
+    public static class Builder {
+
+        final Map<Multicodec, JwkProvider> providers;
+
+        Builder(Map<Multicodec, JwkProvider> providers) {
+            this.providers = providers;
+        }
+
+        public Builder with(Multicodec codec, JwkProvider provider) {
+            providers.put(codec, provider);
+            return this;
+        }
+
+        public DidKeyJwkMethodProvider build() {
+            if (providers.isEmpty()) {
+                return DEFAULT;
+            }
+            return new DidKeyJwkMethodProvider(Collections.unmodifiableMap(providers));
+        }
+
     }
 }

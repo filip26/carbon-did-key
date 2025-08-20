@@ -19,10 +19,11 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import com.apicatalog.did.DidUrl;
 import com.apicatalog.did.document.DidDocument;
-import com.apicatalog.did.document.VerificationMethod;
+import com.apicatalog.did.document.DidVerificationMethod;
 import com.apicatalog.did.key.DidKey;
 import com.apicatalog.did.key.DidKeyResolver;
-import com.apicatalog.did.resolver.ResolvedDocument;
+import com.apicatalog.did.resolver.DidResolutionException;
+import com.apicatalog.did.resolver.ResolvedDidDocument;
 import com.apicatalog.multicodec.Multicodec.Tag;
 import com.apicatalog.multicodec.MulticodecDecoder;
 
@@ -35,11 +36,11 @@ class JwkResolverTest {
     @DisplayName("resolve()")
     @ParameterizedTest(name = "{0}")
     @MethodSource({ "vectors" })
-    void resolve(URI did, Map<String, Object> expected) {
+    void resolve(URI did, Map<String, Object> expected) throws DidResolutionException {
 
         final DidKey didKey = DidKey.of(did, CODECS);
 
-        ResolvedDocument result = RESOLVER.resolve(didKey);
+        ResolvedDidDocument result = RESOLVER.resolve(didKey);
         assertNotNull(result);
         assertNull(result.metadata());
         assertNotNull(result.document());
@@ -63,12 +64,12 @@ class JwkResolverTest {
         assertTrue(document.hasRequiredProperties());
     }
 
-    static void assertMethod(Collection<VerificationMethod> methods, DidKey didKey, Map<String, Object> expected) {
+    static void assertMethod(Collection<DidVerificationMethod> methods, DidKey didKey, Map<String, Object> expected) {
 
         assertNotNull(methods);
         assertEquals(1, methods.size());
 
-        VerificationMethod method = methods.iterator().next();
+        DidVerificationMethod method = methods.iterator().next();
 
         assertNotNull(method);
         assertEquals(DidUrl.fragment(didKey, didKey.getMethodSpecificId()), method.id());

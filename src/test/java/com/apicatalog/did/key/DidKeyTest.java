@@ -24,7 +24,7 @@ import com.apicatalog.multicodec.Multicodec.Tag;
 import com.apicatalog.multicodec.MulticodecDecoder;
 import com.apicatalog.multicodec.codec.KeyCodec;
 
-@DisplayName("DID Key Method")
+@DisplayName("DID Key")
 @TestMethodOrder(OrderAnnotation.class)
 class DidKeyTest {
 
