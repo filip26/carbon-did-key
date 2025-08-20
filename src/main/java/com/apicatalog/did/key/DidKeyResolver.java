@@ -28,7 +28,9 @@ public class DidKeyResolver implements DidResolver {
 
     // supported multicodecs
     protected final MulticodecDecoder codecs;
+    // signature method(s) provider
     protected final Function<DidKey, Collection<DidVerificationMethod>> provider;
+    // future option place-holder
     protected boolean encryptionKeyDerivation;
 
     protected DidKeyResolver(final MulticodecDecoder codecs,

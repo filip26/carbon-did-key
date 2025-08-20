@@ -1,9 +1,11 @@
 package com.apicatalog.did.key;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.net.URI;
 import java.util.Collection;
@@ -20,8 +22,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import com.apicatalog.did.DidUrl;
 import com.apicatalog.did.document.DidDocument;
 import com.apicatalog.did.document.DidVerificationMethod;
-import com.apicatalog.did.key.DidKey;
-import com.apicatalog.did.key.DidKeyResolver;
 import com.apicatalog.did.resolver.DidResolutionException;
 import com.apicatalog.did.resolver.ResolvedDidDocument;
 import com.apicatalog.multicodec.Multicodec.Tag;
@@ -64,20 +64,29 @@ class MultiResolverTest {
         assertTrue(document.hasRequiredProperties());
     }
 
-    static void assertMethod(Collection<DidVerificationMethod> methods, DidKey didKey, Map<String, Object> expected) {
+    static void assertMethod(Collection<DidVerificationMethod> methods, DidKey didKey, Map<String, Object> jwk) {
 
         assertNotNull(methods);
         assertEquals(2, methods.size());
 
-        DidVerificationMethod method = methods.iterator().next();
+        for (DidVerificationMethod method : methods) {
+            assertNotNull(method);
+            assertEquals(DidUrl.fragment(didKey, didKey.getMethodSpecificId()), method.id());
+            assertEquals(didKey, method.controller());
 
-        assertNotNull(method);
-        assertEquals(DidUrl.fragment(didKey, didKey.getMethodSpecificId()), method.id());
-        assertEquals(DidKeyResolver.JWK_TYPE, method.type());
-        assertEquals(didKey, method.controller());
+            if (DidKeyResolver.JWK_TYPE.equals(method.type())) {
+                assertEquals(jwk, method.publicKeyJwk());
+                assertNull(method.publicKeyMultibase());
 
-        assertEquals(expected, method.publicKeyJwk());
-        assertNull(method.publicKeyMultibase());
+            } else if (DidKeyResolver.MULTIKEY_TYPE.equals(method.type())) {
+                assertEquals(didKey.baseName(), method.publicKeyMultibase().baseName());
+                assertArrayEquals(didKey.debased(), method.publicKeyMultibase().debased());
+                assertNull(method.publicKeyJwk());
+
+            } else {
+                fail();
+            }
+        }
     }
 
     static Stream<Arguments> vectors() {
