@@ -40,7 +40,7 @@ public class DidKeyJwkMethodProvider implements VerificationMethodProvider {
         this.jwkProviders = jwkProviders;
     }
 
-    public static VerificationMethodProvider getInstance() {
+    public static DidKeyJwkMethodProvider getInstance() {
         return DEFAULT;
     }
 
@@ -191,6 +191,5 @@ public class DidKeyJwkMethodProvider implements VerificationMethodProvider {
             }
             return new DidKeyJwkMethodProvider(Collections.unmodifiableMap(providers));
         }
-
     }
 }

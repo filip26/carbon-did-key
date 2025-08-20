@@ -31,7 +31,7 @@ import com.apicatalog.multicodec.MulticodecDecoder;
 class JwkResolverTest {
 
     static MulticodecDecoder CODECS = MulticodecDecoder.getInstance(Tag.Key);
-    static DidKeyResolver RESOLVER = DidKeyResolver.jwk(CODECS).build();
+    static DidKeyResolver RESOLVER = DidKeyResolver.with(CODECS).jwk().build();
 
     @DisplayName("resolve()")
     @ParameterizedTest(name = "{0}")

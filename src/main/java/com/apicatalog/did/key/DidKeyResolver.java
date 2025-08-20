@@ -1,10 +1,12 @@
 package com.apicatalog.did.key;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.Set;
 
 import com.apicatalog.did.Did;
 import com.apicatalog.did.DidUrl;
@@ -25,27 +27,20 @@ public class DidKeyResolver implements DidResolver {
 
     // supported multicodecs
     protected final MulticodecDecoder codecs;
+    protected final Map<String, VerificationMethodProvider> providers;
 
     // options
-    protected String methodType;
-    protected VerificationMethodProvider methodProvider;
     protected boolean encryptionKeyDerivation;
 
-    protected DidKeyResolver(final MulticodecDecoder codecs, String methodType, VerificationMethodProvider methodProvider) {
+    protected DidKeyResolver(final MulticodecDecoder codecs, final Map<String, VerificationMethodProvider> methods) {
         this.codecs = codecs;
-        this.methodType = methodType;
-        this.methodProvider = methodProvider;
+        this.providers = methods;
         this.encryptionKeyDerivation = false;
     }
 
-    public static Builder multikey(final MulticodecDecoder codecs) {
+    public static Builder with(final MulticodecDecoder codecs) {
         Objects.requireNonNull(codecs);
-        return new Builder(codecs, MULTIKEY_TYPE).with(MULTIKEY_TYPE, DidKeyResolver::multikey);
-    }
-
-    public static Builder jwk(final MulticodecDecoder codecs) {
-        Objects.requireNonNull(codecs);
-        return new Builder(codecs, JWK_TYPE).with(JWK_TYPE, DidKeyJwkMethodProvider.getInstance());
+        return new Builder(codecs);
     }
 
     @Override
@@ -63,10 +58,20 @@ public class DidKeyResolver implements DidResolver {
 
         final DidKey didKey = DidKey.of(did, codecs);
 
-        return ResolvedDidDocument.of(
-                Document.of(
-                        did,
-                        DidKeyResolver.createSignatureMethod(didKey, methodType, methodProvider)));
+        Collection<DidVerificationMethod> methods;
+
+        if (providers.size() == 1) {
+            final Entry<String, VerificationMethodProvider> provider = providers.entrySet().iterator().next();
+            methods = Collections.singleton(provider.getValue().get(didKey, provider.getKey()));
+
+        } else {
+            methods = new ArrayList<DidVerificationMethod>(providers.size());
+            for (Entry<String, VerificationMethodProvider> provider : providers.entrySet()) {
+                methods.add(provider.getValue().get(didKey, provider.getKey()));
+            }
+        }
+
+        return ResolvedDidDocument.of(Document.of(did, methods));
     }
 
     public static DidVerificationMethod multikey(final DidKey key, final String type) {
@@ -75,15 +80,6 @@ public class DidKeyResolver implements DidResolver {
                 type,
                 key,
                 key);
-    }
-
-    public static final DidVerificationMethod createSignatureMethod(final DidKey didKey, final String methodType, final VerificationMethodProvider method) {
-
-        Objects.requireNonNull(didKey);
-        Objects.requireNonNull(methodType);
-        Objects.requireNonNull(method);
-
-        return method.get(didKey, methodType);
     }
 
     public boolean encryptionKeyDerivation() {
@@ -95,84 +91,54 @@ public class DidKeyResolver implements DidResolver {
         return this;
     }
 
-    public String methodType() {
-        return methodType;
-    }
-
-    public DidKeyResolver methodType(String methodType) {
-        this.methodType = methodType;
-        return this;
-    }
-
-    public DidKeyResolver methodProvider(VerificationMethodProvider methodProvider) {
-        this.methodProvider = methodProvider;
-        return this;
-    }
-
     public static class Builder {
 
         final MulticodecDecoder codecs;
         final Map<String, VerificationMethodProvider> providers;
-        final String keyType;
 
-        protected Builder(final MulticodecDecoder codecs, final String keyType) {
+        protected Builder(final MulticodecDecoder codecs) {
             this.codecs = codecs;
-            this.keyType = keyType;
             this.providers = new LinkedHashMap<>();
         }
 
-        public Builder with(String type, VerificationMethodProvider provider) {
-            providers.put(type, provider);
+        public Builder method(String methodType, VerificationMethodProvider provider) {
+            providers.put(methodType, provider);
             return this;
         }
 
+        public Builder multikey() {
+            return multibase(MULTIKEY_TYPE);
+        }
+
+        public Builder multibase(String methodType) {
+            return method(methodType, DidKeyResolver::multikey);
+        }
+
+        public Builder jwk() {
+            return jwk(JWK_TYPE);
+        }
+
+        public Builder jwk(String methodType) {
+            return method(methodType, DidKeyJwkMethodProvider.getInstance());
+        }
+
         public DidKeyResolver build() {
-
-            final VerificationMethodProvider provider;
-
-            if (providers.size() == 1) {
-                provider = providers.values().iterator().next();
-            } else {
-                provider = new Providers(Collections.unmodifiableMap(providers));
-            }
-
-            return new DidKeyResolver(codecs, keyType, provider);
+            return new DidKeyResolver(codecs, Collections.unmodifiableMap(providers));
         }
     }
-    
-    final static class Providers implements VerificationMethodProvider {
 
-        final Map<String, VerificationMethodProvider> providers;
-
-        Providers(final Map<String, VerificationMethodProvider> providers) {
-            this.providers = providers;
-        }
-
-        @Override
-        public DidVerificationMethod get(DidKey key, String type) {
-
-            final VerificationMethodProvider provider = providers.get(type);
-
-            if (provider == null) {
-                throw new IllegalArgumentException("Unsupported " + type + ", no method provider is associated with the type.");
-            }
-            
-            return provider.get(key, type);
-        }
-    }
-    
     final static class Document implements DidDocument {
 
         final Did id;
-        final Set<DidVerificationMethod> method;
+        final Collection<DidVerificationMethod> method;
 
-        Document(Did id, Set<DidVerificationMethod> method) {
+        Document(Did id, Collection<DidVerificationMethod> method) {
             this.id = id;
             this.method = method;
         }
 
-        public static Document of(Did id, DidVerificationMethod method) {
-            return new Document(id, Collections.singleton(method));
+        public static Document of(Did id, Collection<DidVerificationMethod> methods) {
+            return new Document(id, methods);
         }
 
         @Override
@@ -181,27 +147,27 @@ public class DidKeyResolver implements DidResolver {
         }
 
         @Override
-        public Set<DidVerificationMethod> verification() {
+        public Collection<DidVerificationMethod> verification() {
             return method;
         }
-        
+
         @Override
-        public Set<DidVerificationMethod> authentication() {
+        public Collection<DidVerificationMethod> authentication() {
             return method;
         }
-        
+
         @Override
-        public Set<DidVerificationMethod> assertion() {
+        public Collection<DidVerificationMethod> assertion() {
             return method;
         }
-        
+
         @Override
-        public Set<DidVerificationMethod> capabilityInvocation() {
+        public Collection<DidVerificationMethod> capabilityInvocation() {
             return method;
         }
-        
+
         @Override
-        public Set<DidVerificationMethod> capabilityDelegation() {
+        public Collection<DidVerificationMethod> capabilityDelegation() {
             return method;
         }
     }

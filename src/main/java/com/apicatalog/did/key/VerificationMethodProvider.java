@@ -5,6 +5,6 @@ import com.apicatalog.did.document.DidVerificationMethod;
 @FunctionalInterface
 public interface VerificationMethodProvider {
 
-    DidVerificationMethod get(final DidKey key, String type);
+     DidVerificationMethod get(final DidKey key, String type);
     
 }
