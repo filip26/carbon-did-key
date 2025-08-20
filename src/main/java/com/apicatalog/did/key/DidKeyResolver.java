@@ -7,6 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.function.Function;
 
 import com.apicatalog.did.Did;
 import com.apicatalog.did.DidUrl;
@@ -27,12 +28,13 @@ public class DidKeyResolver implements DidResolver {
 
     // supported multicodecs
     protected final MulticodecDecoder codecs;
-    protected final Map<String, VerificationMethodProvider> providers;
+    protected final Function<DidKey, Collection<DidVerificationMethod>> provider;
     protected boolean encryptionKeyDerivation;
 
-    protected DidKeyResolver(final MulticodecDecoder codecs, final Map<String, VerificationMethodProvider> methods) {
+    protected DidKeyResolver(final MulticodecDecoder codecs,
+            final Function<DidKey, Collection<DidVerificationMethod>> provider) {
         this.codecs = codecs;
-        this.providers = methods;
+        this.provider = provider;
         this.encryptionKeyDerivation = false;
     }
 
@@ -56,20 +58,7 @@ public class DidKeyResolver implements DidResolver {
 
         final DidKey didKey = DidKey.of(did, codecs);
 
-        Collection<DidVerificationMethod> methods;
-
-        if (providers.size() == 1) {
-            final Entry<String, VerificationMethodProvider> provider = providers.entrySet().iterator().next();
-            methods = Collections.singleton(provider.getValue().get(didKey, provider.getKey()));
-
-        } else {
-            methods = new ArrayList<DidVerificationMethod>(providers.size());
-            for (Entry<String, VerificationMethodProvider> provider : providers.entrySet()) {
-                methods.add(provider.getValue().get(didKey, provider.getKey()));
-            }
-        }
-
-        return ResolvedDidDocument.of(Document.of(did, methods));
+        return ResolvedDidDocument.of(Document.of(didKey, provider.apply(didKey)));
     }
 
     public static DidVerificationMethod multikey(final DidKey key, final String type) {
@@ -121,11 +110,24 @@ public class DidKeyResolver implements DidResolver {
         }
 
         public DidKeyResolver build() {
-            return new DidKeyResolver(codecs, Collections.unmodifiableMap(providers));
+            if (providers.size() == 1) {
+                final Entry<String, VerificationMethodProvider> provider = providers.entrySet().iterator().next();
+                return new DidKeyResolver(codecs, key -> Collections.singleton(provider.getValue().get(key, provider.getKey())));
+            }
+            return new DidKeyResolver(codecs, key -> createSignatureMethods(key, providers));
         }
     }
 
-    final static class Document implements DidDocument {
+    static final Collection<DidVerificationMethod> createSignatureMethods(DidKey didKey, Map<String, VerificationMethodProvider> providers) {
+        Collection<DidVerificationMethod> methods = new ArrayList<DidVerificationMethod>(providers.size());
+        for (Entry<String, VerificationMethodProvider> provider : providers.entrySet()) {
+            methods.add(provider.getValue().get(didKey, provider.getKey()));
+        }
+
+        return Collections.unmodifiableCollection(methods);
+    }
+
+    static final class Document implements DidDocument {
 
         final Did id;
         final Collection<DidVerificationMethod> method;
