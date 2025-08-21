@@ -24,16 +24,16 @@ import com.apicatalog.multicodec.Multicodec.Tag;
 import com.apicatalog.multicodec.MulticodecDecoder;
 import com.apicatalog.multicodec.codec.KeyCodec;
 
-@DisplayName("DID Key Method")
+@DisplayName("DID Key")
 @TestMethodOrder(OrderAnnotation.class)
 class DidKeyTest {
 
     static MulticodecDecoder CODECS = MulticodecDecoder.getInstance(Tag.Key);
 
-    @DisplayName("of(DID)")
+    @DisplayName("of(Did)")
     @ParameterizedTest(name = "{0}")
     @MethodSource({ "positiveVectors", "versionedKeys" })
-    void ofString(String uri, int keyLength, String version, Multicodec codec) {
+    void ofDid(String uri, int keyLength, String version, Multicodec codec) {
         assertDidKey(DidKey.of(Did.of(uri), CODECS), uri, keyLength, version, codec);
     }
 
@@ -48,7 +48,7 @@ class DidKeyTest {
     @ParameterizedTest(name = "{0}")
     @MethodSource({ "positiveVectors" })
     void ofBytes(String uri, int keyLength, String version, Multicodec codec) {
-        assertDidKey(DidKey.of(rawBytes(uri), codec), uri, keyLength, version, codec);
+        assertDidKey(DidKey.of(decoded(uri), codec), uri, keyLength, version, codec);
     }
 
     static void assertDidKey(DidKey didKey, String uri, int keyLength, String version, Multicodec codec) {
@@ -58,26 +58,27 @@ class DidKeyTest {
         assertEquals(codec.code(), didKey.codecCode());
         assertEquals(codec, didKey.codec());
 
-//        assertEquals( didKey.debased()
-        assertArrayEquals(rawBytes(uri), didKey.decoded());
-        assertEquals("key", didKey.getMethod());
-//        assertEquals(didKey.getMethodSpecificId());
-        assertFalse(didKey.isDidUrl());
-        assertArrayEquals(rawBytes(uri), didKey.rawKeyBytes());
+        assertEquals(DidKey.METHOD_NAME, didKey.getMethod());
+
+        assertArrayEquals(debased(uri), didKey.debased());
+        assertArrayEquals(decoded(uri), didKey.decoded());
+
+//      assertEquals(didKey.getMethodSpecificId());
         assertEquals(uri, didKey.toString());
 
         assertEquals(URI.create(uri), didKey.toUri());
 
         assertTrue(didKey.equals(didKey));
+        assertFalse(didKey.isDidUrl());
         assertTrue(DidKey.isDidKey(didKey));
         assertTrue(DidKey.isDidKey(uri));
         assertTrue(DidKey.isDidKey(URI.create(uri)));
     }
 
-    @DisplayName("negative: of(String)")
+    @DisplayName("negative: of(URI)")
     @ParameterizedTest
     @MethodSource({ "negativeVectors" })
-    void ofStringNegative(URI uri, int keyLength, String version) {
+    void ofURINegative(URI uri, int keyLength, String version) {
         try {
 
             final DidKey didKey = DidKey.of(uri, CODECS);
@@ -163,9 +164,12 @@ class DidKeyTest {
                 Arguments.of("did:key:z6x", 0, null));
     }
 
-    static byte[] rawBytes(String did) {
+    static byte[] debased(String did) {
         String[] parts = did.split(":");
-        return CODECS.decode(MultibaseDecoder.getInstance().decode(parts[parts.length - 1]));
+        return MultibaseDecoder.getInstance().decode(parts[parts.length - 1]);
     }
 
+    static byte[] decoded(String did) {
+        return CODECS.decode(debased(did));
+    }
 }
