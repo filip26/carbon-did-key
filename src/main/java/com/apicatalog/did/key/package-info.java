@@ -1,7 +1,6 @@
 /**
  * Provides support for the {@code did:key} method.
  *
- * <p>
  * This package contains:
  * <ul>
  * <li>{@link com.apicatalog.did.key.DidKey} — an immutable representation of a
@@ -13,7 +12,6 @@
  * {@link com.apicatalog.did.document.DidVerificationMethod} instances from
  * {@link com.apicatalog.did.key.DidKey} identifiers.</li>
  * </ul>
- * </p>
  *
  * @see <a href="https://w3c-ccg.github.io/did-key-spec/">DID Key Method
  *      Specification</a>
