@@ -3,6 +3,7 @@
 An implementation of the [`did:key`](https://w3c-ccg.github.io/did-key-spec) method for static cryptographic keys in Java.
 
 [![Java 8 CI](https://github.com/filip26/carbon-did-key/actions/workflows/java8-build.yml/badge.svg)](https://github.com/filip26/carbon-did-key/actions/workflows/java8-build.yml)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/7f783f2e5d0b4fc6a08094d312a58309)](https://app.codacy.com/gh/filip26/carbon-did-key/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![Maven Central](https://img.shields.io/maven-central/v/com.apicatalog/carbon-did-key.svg?label=Maven%20Central)](https://search.maven.org/artifact/com.apicatalog/carbon-did-key)
 [![javadoc](https://javadoc.io/badge2/com.apicatalog/carbon-did-key/javadoc.svg)](https://javadoc.io/doc/com.apicatalog/carbon-did-key)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
