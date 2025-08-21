@@ -57,7 +57,7 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <maven.compiler.source>1.8</maven.compiler.source>
 
-        <carbon.did.version>0.9.1-SNAPSHOT</carbon.did.version>
+        <carbon.did.version>0.9.1</carbon.did.version>
 
         <copper.multicodec.version>2.1.0</copper.multicodec.version>
         <copper.multibase.version>4.0.0</copper.multibase.version>

@@ -1,4 +1,4 @@
-package com.apicatalog.did.key.jwk;
+package com.apicatalog.did.key;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -20,8 +20,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import com.apicatalog.did.DidUrl;
 import com.apicatalog.did.document.DidDocument;
 import com.apicatalog.did.document.DidVerificationMethod;
-import com.apicatalog.did.key.DidKey;
-import com.apicatalog.did.key.DidKeyResolver;
 import com.apicatalog.did.resolver.DidResolutionException;
 import com.apicatalog.did.resolver.ResolvedDidDocument;
 import com.apicatalog.multicodec.Multicodec.Tag;
