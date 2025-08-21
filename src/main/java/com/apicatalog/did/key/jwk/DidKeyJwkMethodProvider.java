@@ -22,10 +22,28 @@ import com.apicatalog.did.key.VerificationMethodProvider;
 import com.apicatalog.multicodec.Multicodec;
 import com.apicatalog.multicodec.codec.KeyCodec;
 
+/**
+ * A {@link VerificationMethodProvider} that generates verification methods for
+ * {@link DidKey} identifiers using the JWK (JSON Web Key) representation.
+ *
+ * <p>
+ * Supports common key types such as:
+ * </p>
+ * <ul>
+ * <li>Ed25519</li>
+ * <li>BLS12-381 (G1, G2)</li>
+ * <li>P-256, P-384, secp256k1</li>
+ * </ul>
+ *
+ * <p>
+ * The returned verification methods contain a JWK-formatted public key.
+ * </p>
+ */
 public class DidKeyJwkMethodProvider implements VerificationMethodProvider {
 
     static final Encoder BASE64_ENCODER = Base64.getUrlEncoder().withoutPadding();
 
+    /** Default provider instance with common key types pre-registered. */
     static final DidKeyJwkMethodProvider DEFAULT = with(KeyCodec.ED25519_PUBLIC_KEY, key -> getJwk("Ed25519", key))
             .with(KeyCodec.BLS12_381_G1_PUBLIC_KEY, key -> getJwk("Bls12381G1", key))
             .with(KeyCodec.BLS12_381_G2_PUBLIC_KEY, key -> getJwk("Bls12381G2", key))
@@ -40,14 +58,31 @@ public class DidKeyJwkMethodProvider implements VerificationMethodProvider {
         this.jwkProviders = jwkProviders;
     }
 
+    /**
+     * Returns the default provider instance with built-in key type mappings.
+     *
+     * @return default {@link DidKeyJwkMethodProvider}
+     */
     public static DidKeyJwkMethodProvider getInstance() {
         return DEFAULT;
     }
 
+    /**
+     * Returns a builder pre-populated with the defaults.
+     *
+     * @return a builder initialized with the default providers
+     */
     public static Builder withDefaults() {
         return (new Builder(new LinkedHashMap<>(DEFAULT.jwkProviders)));
     }
 
+    /**
+     * Creates a new builder starting with a single codec/provider mapping.
+     *
+     * @param codec    the multicodec
+     * @param provider the JWK provider
+     * @return a builder
+     */
     public static Builder with(Multicodec codec, JwkProvider provider) {
         return (new Builder(new LinkedHashMap<>())).with(codec, provider);
     }
@@ -58,7 +93,7 @@ public class DidKeyJwkMethodProvider implements VerificationMethodProvider {
         final JwkProvider provider = jwkProviders.get(key.codec());
 
         if (provider == null) {
-            throw new IllegalArgumentException("Curve type " + key.codec() + "is not supported.");
+            throw new IllegalArgumentException("Curve type [" + key.codec() + "] is not supported.");
         }
 
         final DidUrl id = DidUrl.fragment(key, key.getMethodSpecificId());
@@ -70,6 +105,13 @@ public class DidKeyJwkMethodProvider implements VerificationMethodProvider {
                 provider.get(key));
     }
 
+    /**
+     * Creates a JWK representation for an OKP-type key (e.g., Ed25519).
+     *
+     * @param curveType the JWK "crv" parameter value
+     * @param key       the {@link DidKey}
+     * @return an unmodifiable JWK map
+     */
     public static final Map<String, Object> getJwk(String curveType, DidKey key) {
         Map<String, Object> jwk = new LinkedHashMap<>();
         jwk.put("kty", "OKP");
@@ -78,6 +120,15 @@ public class DidKeyJwkMethodProvider implements VerificationMethodProvider {
         return Collections.unmodifiableMap(jwk);
     }
 
+    /**
+     * Creates a JWK representation for an EC key (P-256, P-384, secp256k1).
+     *
+     * @param curve         the JWK "crv" parameter
+     * @param curveSpecName the JCA curve spec name
+     * @param key           the {@link DidKey}
+     * @param length        coordinate byte length
+     * @return an unmodifiable JWK map
+     */
     public static final Map<String, Object> getECJwk(String curve, String curveSpecName, DidKey key, int length) {
 
         try {
@@ -91,10 +142,11 @@ public class DidKeyJwkMethodProvider implements VerificationMethodProvider {
             return Collections.unmodifiableMap(jwk);
 
         } catch (Exception e) {
-            throw new IllegalArgumentException(e);
+            throw new IllegalArgumentException("Failed to construct EC JWK for curve [" + curve + "].", e);
         }
     }
 
+    /** Ensures EC coordinate byte arrays are of the expected length. */
     static final byte[] normalize(byte[] v, int len) {
         if (v.length == len)
             return v;
@@ -105,10 +157,11 @@ public class DidKeyJwkMethodProvider implements VerificationMethodProvider {
         return out;
     }
 
+    /** Decompresses a compressed EC point. */
     static final ECPoint decompress(String curveSpecName, byte[] compressed) throws InvalidParameterSpecException, NoSuchAlgorithmException {
 
         if (compressed.length < 2 || (compressed[0] & 0xFE) != 0x02) {
-            throw new IllegalArgumentException("Need compressed point");
+            throw new IllegalArgumentException("Compressed EC point required.");
         }
 
         AlgorithmParameters params = AlgorithmParameters.getInstance("EC");
@@ -118,7 +171,7 @@ public class DidKeyJwkMethodProvider implements VerificationMethodProvider {
         int length = (spec.getCurve().getField().getFieldSize() + 7) / 8;
 
         if (compressed.length != 1 + length) {
-            throw new IllegalArgumentException("Unexpected length");
+            throw new IllegalArgumentException("Unexpected EC point length for curve [" + curveSpecName + "].");
         }
 
         BigInteger p = ((ECFieldFp) spec.getCurve().getField()).getP();
@@ -133,7 +186,9 @@ public class DidKeyJwkMethodProvider implements VerificationMethodProvider {
         return new ECPoint(x, y);
     }
 
-    // Tonelli–Shanks general modular sqrt (handles p ≡ 1 mod 4, e.g. P-384)
+    /**
+     * Computes modular square root using Tonelli–Shanks algorithm.
+     */
     static final BigInteger sqrtMod(BigInteger n, BigInteger p) {
         if (n.equals(BigInteger.ZERO)) {
             return BigInteger.ZERO;
@@ -172,6 +227,9 @@ public class DidKeyJwkMethodProvider implements VerificationMethodProvider {
         return r;
     }
 
+    /**
+     * Builder for customizing supported codecs → JWK providers mapping.
+     */
     public static class Builder {
 
         final Map<Multicodec, JwkProvider> providers;
@@ -180,11 +238,13 @@ public class DidKeyJwkMethodProvider implements VerificationMethodProvider {
             this.providers = providers;
         }
 
+        /** Registers a new codec → provider mapping. */
         public Builder with(Multicodec codec, JwkProvider provider) {
             providers.put(codec, provider);
             return this;
         }
 
+        /** Builds the provider, falling back to default if empty. */
         public DidKeyJwkMethodProvider build() {
             if (providers.isEmpty()) {
                 return DEFAULT;
