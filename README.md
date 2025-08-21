@@ -46,7 +46,7 @@ didDooc.document().verification().forEach(vm -> System.out.println(vm.id()));
 <dependency>
     <groupId>com.apicatalog</groupId>
     <artifactId>carbon-did-key</artifactId>
-    <version>0.9.1</version>
+    <version>0.9.2</version>
 </dependency>
 
 ```
@@ -61,7 +61,6 @@ All PR's welcome!
 
 Fork and clone the project repository.
 
-#### Java 1.8
 ```bash
 > cd carbon-did-key
 > mvn clean package
