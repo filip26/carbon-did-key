@@ -194,8 +194,24 @@ public class DidKeyResolver implements DidResolver {
             this.keyToId = key -> DidUrl.fragment(key, key.getMethodSpecificId());
         }
 
-        public Builder ids(Function<DidKey, DidUrl> keyToId) {
-            this.keyToId = keyToId;
+        /**
+         * Sets the function used to derive the {@link DidUrl} identifier for
+         * verification methods created from a given {@link DidKey}.
+         *
+         * <p>
+         * The mapper is applied during resolution to produce the verification method ID
+         * (for example, mapping a {@code did:key:...} to a fragment
+         * {@code did:key:...#...}). By default, this builder uses
+         * {@code DidUrl.fragment(key, key.getMethodSpecificId())}.
+         * </p>
+         *
+         * @param keyToId mapping from {@link DidKey} to the verification method
+         *                {@link DidUrl}
+         * @return this builder
+         * @throws NullPointerException if {@code keyToId} is {@code null}
+         */
+        public Builder verificationMethodId(Function<DidKey, DidUrl> keyToId) {
+            this.keyToId = Objects.requireNonNull(keyToId, "keyToId must not be null");
             return this;
         }
 
@@ -261,8 +277,7 @@ public class DidKeyResolver implements DidResolver {
     static final Collection<DidVerificationMethod> createSignatureMethods(
             DidKey didKey,
             Map<String, VerificationMethodProvider> providers,
-            Function<DidKey, DidUrl> keyToId
-            ) {
+            Function<DidKey, DidUrl> keyToId) {
 
         Objects.requireNonNull(didKey, "DidKey must not be null.");
         Objects.requireNonNull(providers, "Verification method providers must not be null.");

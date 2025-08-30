@@ -29,18 +29,31 @@ It can also be used for testing and local development where a simple, self-conta
 ## Examples
 
 ```javascript
-
+// Create a resolver for did:key 
 DidKeyResolver resolver = DidKeyResolver
+    // Initialize the resolver builder with a multicodec decoder
     .with(codecs)
+    // Configure the resolver to emit Multikey verification methods
     .multikey()
+    // Also configure the resolver to emit JWK verification methods
+    .jwk()
+    // Override how verification method identifiers are constructed.
+    // In this example, each method will be given a fragment "#vm"
+    // relative to the did:key identifier.
+    .verificationMethodId(key -> DidUrl.fragment(key, "vm"))
+    // Build the resolver instance
     .build();
 
 // Parse an existing `did:key`
 var didKey = Did.of("did:key:z6MkvG5D...", ...);
 
+// Resolve the did:key into a minimal DID Document
 var didDoc = resolver.resolve(didKey);
 
+// Print the DID Document identifier
 System.out.println(didDoc.document().id());
+
+// Print all verification method identifiers contained in the DID Document
 didDooc.document().verification().forEach(vm -> System.out.println(vm.id()));
 ```
 
