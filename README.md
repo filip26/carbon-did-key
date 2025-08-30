@@ -1,4 +1,4 @@
-# Carbon DID Key Method
+# 🔐 Carbon DID Key Method
 
 The [`did:key`](https://w3c-ccg.github.io/did-key-spec) method represents static cryptographic keys as Decentralized Identifiers (DIDs).
 
