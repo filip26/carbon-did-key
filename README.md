@@ -2,7 +2,7 @@
 
 The [`did:key`](https://w3c-ccg.github.io/did-key-spec) method represents static cryptographic keys as Decentralized Identifiers (DIDs).
 
-Each `did:key` is self-contained. The identifier encodes the public key material required to verify signatures or perform encryption without relying on any external registry or multi-party resolution process.  
+`did:key` is self-contained. The identifier encodes the public key material required to verify signatures or perform encryption without relying on any external registry or multi-party resolution process.  
 
 `did:key` is suited for portable and lightweight use cases such as verifiable credentials, decentralized identifiers (DIDs), and other decentralized or domain-specific deployments that operate without blockchains or centralized registries. 
 It can also be used for testing and local development where a simple, self-contained DID method is required.
