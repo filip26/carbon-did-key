@@ -31,7 +31,11 @@ import com.apicatalog.multicodec.MulticodecDecoder;
 class MultiResolverTest {
 
     static MulticodecDecoder CODECS = MulticodecDecoder.getInstance(Tag.Key);
-    static DidKeyResolver RESOLVER = DidKeyResolver.with(CODECS).multikey().jwk().build();
+    static DidKeyResolver RESOLVER = DidKeyResolver.with(CODECS)
+            .multikey()
+            .jwk()
+            .verificationMethodId(key -> DidUrl.fragment(key, "vm"))
+            .build();
 
     @DisplayName("resolve()")
     @ParameterizedTest(name = "{0}")
@@ -70,7 +74,7 @@ class MultiResolverTest {
 
         for (DidVerificationMethod method : methods) {
             assertNotNull(method);
-            assertEquals(DidUrl.fragment(didKey, didKey.getMethodSpecificId()), method.id());
+            assertEquals(DidUrl.fragment(didKey, "vm"), method.id());
             assertEquals(didKey, method.controller());
 
             if (DidKeyResolver.JWK_TYPE.equals(method.type())) {

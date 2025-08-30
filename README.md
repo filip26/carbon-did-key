@@ -1,15 +1,20 @@
-# Carbon DID Key Method
+# 🔐 Carbon DID Key Method
 
-An implementation of the [`did:key`](https://w3c-ccg.github.io/did-key-spec) method for static cryptographic keys in Java.
+The [`did:key`](https://w3c-ccg.github.io/did-key-spec) method represents static cryptographic keys as Decentralized Identifiers (DIDs).
+
+`did:key` is self-contained. The identifier encodes the public key material required to verify signatures or perform encryption without relying on any external registry or multi-party resolution process.  
+
+`did:key` is suited for portable and lightweight use cases such as verifiable credentials, decentralized identifiers (DIDs), and other decentralized or domain-specific deployments that operate without blockchains or centralized registries. 
+It can also be used for testing and local development where a simple, self-contained DID method is required.
 
 [![Java 8 CI](https://github.com/filip26/carbon-did-key/actions/workflows/java8-build.yml/badge.svg)](https://github.com/filip26/carbon-did-key/actions/workflows/java8-build.yml)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/7f783f2e5d0b4fc6a08094d312a58309)](https://app.codacy.com/gh/filip26/carbon-did-key/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
-[![Maven Central](https://img.shields.io/maven-central/v/com.apicatalog/carbon-did-key.svg?label=Maven%20Central)](https://search.maven.org/artifact/com.apicatalog/carbon-did-key)
 [![javadoc](https://javadoc.io/badge2/com.apicatalog/carbon-did-key/javadoc.svg)](https://javadoc.io/doc/com.apicatalog/carbon-did-key)
+[![Maven Central](https://img.shields.io/maven-central/v/com.apicatalog/carbon-did-key.svg?label=Maven%20Central)](https://search.maven.org/artifact/com.apicatalog/carbon-did-key)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 
-## Features
+## ✨ Features
 
 - **DidKey API & Resolver** – work with `did:key` identifiers programmatically.
 - **Verification Methods**
@@ -24,18 +29,31 @@ An implementation of the [`did:key`](https://w3c-ccg.github.io/did-key-spec) met
 ## Examples
 
 ```javascript
-
+// Create a resolver for did:key 
 DidKeyResolver resolver = DidKeyResolver
+    // Initialize the resolver builder with a multicodec decoder
     .with(codecs)
+    // Configure the resolver to emit Multikey verification methods
     .multikey()
+    // Also configure the resolver to emit JWK verification methods
+    .jwk()
+    // Override how verification method identifiers are constructed.
+    // In this example, each method will be given a fragment "#vm"
+    // relative to the did:key identifier.
+    .verificationMethodId(key -> DidUrl.fragment(key, "vm"))
+    // Build the resolver instance
     .build();
 
 // Parse an existing `did:key`
 var didKey = Did.of("did:key:z6MkvG5D...", ...);
 
+// Resolve the did:key into a minimal DID Document
 var didDoc = resolver.resolve(didKey);
 
+// Print the DID Document identifier
 System.out.println(didDoc.document().id());
+
+// Print all verification method identifiers contained in the DID Document
 didDooc.document().verification().forEach(vm -> System.out.println(vm.id()));
 ```
 
@@ -47,7 +65,7 @@ didDooc.document().verification().forEach(vm -> System.out.println(vm.id()));
 <dependency>
     <groupId>com.apicatalog</groupId>
     <artifactId>carbon-did-key</artifactId>
-    <version>0.9.2</version>
+    <version>0.10.0</version>
 </dependency>
 
 ```
@@ -64,7 +82,7 @@ Fork and clone the project repository.
 
 ```bash
 > cd carbon-did-key
-> mvn clean package
+> mvn package
 ```
 
 ## Resources
@@ -82,5 +100,7 @@ Fork and clone the project repository.
 </a> 
 
 ## Commercial Support
-Commercial support is available at filip26@gmail.com
-  
+
+Commercial support and consulting are available.  
+For inquiries, please contact: filip26@gmail.com
+

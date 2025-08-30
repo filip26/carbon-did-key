@@ -88,15 +88,13 @@ public class DidKeyJwkMethodProvider implements VerificationMethodProvider {
     }
 
     @Override
-    public DidVerificationMethod get(DidKey key, String type) {
+    public DidVerificationMethod get(DidUrl id, DidKey key, String type) {
 
         final JwkProvider provider = jwkProviders.get(key.codec());
 
         if (provider == null) {
             throw new IllegalArgumentException("Curve type [" + key.codec() + "] is not supported.");
         }
-
-        final DidUrl id = DidUrl.fragment(key, key.getMethodSpecificId());
 
         return DidVerificationMethod.jwk(
                 id,

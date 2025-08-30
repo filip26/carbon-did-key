@@ -1,5 +1,6 @@
 package com.apicatalog.did.key;
 
+import com.apicatalog.did.DidUrl;
 import com.apicatalog.did.document.DidVerificationMethod;
 
 /**
@@ -17,6 +18,7 @@ public interface VerificationMethodProvider {
     /**
      * Creates a {@link DidVerificationMethod} for the given {@link DidKey}.
      *
+     * @param id   the DID URL uniquely identifying the method
      * @param key  the DID key to build a verification method from, must not be
      *             {@code null}
      * @param type the verification method type identifier (e.g.,
@@ -24,5 +26,5 @@ public interface VerificationMethodProvider {
      *             {@code null}
      * @return a new {@link DidVerificationMethod} instance
      */
-    DidVerificationMethod get(final DidKey key, String type);
+    DidVerificationMethod get(final DidUrl id, final DidKey key, String type);
 }

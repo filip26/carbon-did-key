@@ -56,13 +56,17 @@ public class DidKeyResolver implements DidResolver {
     protected final MulticodecDecoder codecs;
     /** Provider that derives verification methods from a {@link DidKey}. */
     protected final Function<DidKey, Collection<DidVerificationMethod>> provider;
+    /** Provides unique verification method identifier for the given did:key */
+    protected final Function<DidKey, DidUrl> keyToId;
     /** Placeholder for optional encryption key derivation support. */
     protected boolean encryptionKeyDerivation;
 
     protected DidKeyResolver(final MulticodecDecoder codecs,
-            final Function<DidKey, Collection<DidVerificationMethod>> provider) {
+            final Function<DidKey, Collection<DidVerificationMethod>> provider,
+            final Function<DidKey, DidUrl> keyToId) {
         this.codecs = codecs;
         this.provider = provider;
+        this.keyToId = keyToId;
         this.encryptionKeyDerivation = false;
     }
 
@@ -117,7 +121,7 @@ public class DidKeyResolver implements DidResolver {
         try {
             didKey = DidKey.of(did, codecs);
         } catch (IllegalArgumentException e) {
-            throw new DidResolutionException(did.toString(), Code.InvalidDid,  "Invalid did:key value: " + did, e);
+            throw new DidResolutionException(did.toString(), Code.InvalidDid, "Invalid did:key value: " + did, e);
         }
 
         return resolve(didKey);
@@ -144,15 +148,16 @@ public class DidKeyResolver implements DidResolver {
     }
 
     /**
-     * Creates a multibase verification method entry for the given DID key.
+     * Creates a multikey verification method entry for the given DID key.
      *
+     * @param id   the DID URL uniquely identifying the method
      * @param key  the DID key
      * @param type the verification method type
      * @return a new verification method
      */
-    public static DidVerificationMethod multikey(final DidKey key, final String type) {
+    public static DidVerificationMethod multikey(final DidUrl id, final DidKey key, final String type) {
         return DidVerificationMethod.multibase(
-                DidUrl.fragment(key, key.getMethodSpecificId()),
+                id,
                 type,
                 key,
                 key);
@@ -181,10 +186,33 @@ public class DidKeyResolver implements DidResolver {
 
         final MulticodecDecoder codecs;
         final Map<String, VerificationMethodProvider> providers;
+        Function<DidKey, DidUrl> keyToId;
 
         protected Builder(final MulticodecDecoder codecs) {
             this.codecs = codecs;
             this.providers = new LinkedHashMap<>();
+            this.keyToId = key -> DidUrl.fragment(key, key.getMethodSpecificId());
+        }
+
+        /**
+         * Sets the function used to derive the {@link DidUrl} identifier for
+         * verification methods created from a given {@link DidKey}.
+         *
+         * <p>
+         * The mapper is applied during resolution to produce the verification method ID
+         * (for example, mapping a {@code did:key:...} to a fragment
+         * {@code did:key:...#...}). By default, this builder uses
+         * {@code DidUrl.fragment(key, key.getMethodSpecificId())}.
+         * </p>
+         *
+         * @param keyToId mapping from {@link DidKey} to the verification method
+         *                {@link DidUrl}
+         * @return this builder
+         * @throws NullPointerException if {@code keyToId} is {@code null}
+         */
+        public Builder verificationMethodId(Function<DidKey, DidUrl> keyToId) {
+            this.keyToId = Objects.requireNonNull(keyToId, "keyToId must not be null");
+            return this;
         }
 
         /**
@@ -234,22 +262,29 @@ public class DidKeyResolver implements DidResolver {
             }
             if (providers.size() == 1) {
                 final Entry<String, VerificationMethodProvider> provider = providers.entrySet().iterator().next();
-                return new DidKeyResolver(codecs, key -> Collections.singleton(provider.getValue().get(key, provider.getKey())));
+                return new DidKeyResolver(
+                        codecs,
+                        key -> Collections.singleton(provider.getValue().get(keyToId.apply(key), key, provider.getKey())),
+                        keyToId);
             }
-            return new DidKeyResolver(codecs, key -> createSignatureMethods(key, providers));
+            return new DidKeyResolver(
+                    codecs,
+                    key -> createSignatureMethods(key, providers, keyToId),
+                    keyToId);
         }
     }
 
     static final Collection<DidVerificationMethod> createSignatureMethods(
             DidKey didKey,
-            Map<String, VerificationMethodProvider> providers) {
+            Map<String, VerificationMethodProvider> providers,
+            Function<DidKey, DidUrl> keyToId) {
 
         Objects.requireNonNull(didKey, "DidKey must not be null.");
         Objects.requireNonNull(providers, "Verification method providers must not be null.");
 
         Collection<DidVerificationMethod> methods = new ArrayList<>(providers.size());
         for (Entry<String, VerificationMethodProvider> provider : providers.entrySet()) {
-            methods.add(provider.getValue().get(didKey, provider.getKey()));
+            methods.add(provider.getValue().get(keyToId.apply(didKey), didKey, provider.getKey()));
         }
         return Collections.unmodifiableCollection(methods);
     }
