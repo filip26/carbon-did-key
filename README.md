@@ -4,9 +4,7 @@ The [`did:key`](https://w3c-ccg.github.io/did-key-spec) method represents static
 
 Each `did:key` is self-contained. The identifier encodes the public key material required to verify signatures or perform encryption without relying on any external registry or multi-party resolution process.  
 
-`did:key` is suited for lightweight and portable use cases such as testing, local development, verifiable credentials, and deployments that operate without blockchains or centralized registries.
-
-`did:key` is suited for portable and lightweight use cases such as verifiable credentials, decentralized identifiers (DIDs), and other decentralized or domain-specific deployments that operate without blockchains or centralized DID registries. 
+`did:key` is suited for portable and lightweight use cases such as verifiable credentials, decentralized identifiers (DIDs), and other decentralized or domain-specific deployments that operate without blockchains or centralized registries. 
 It can also be used for testing and local development where a simple, self-contained DID method is required.
 
 [![Java 8 CI](https://github.com/filip26/carbon-did-key/actions/workflows/java8-build.yml/badge.svg)](https://github.com/filip26/carbon-did-key/actions/workflows/java8-build.yml)
@@ -71,7 +69,7 @@ Fork and clone the project repository.
 
 ```bash
 > cd carbon-did-key
-> mvn clean package
+> mvn package
 ```
 
 ## Resources
