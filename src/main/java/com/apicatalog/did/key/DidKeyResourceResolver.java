@@ -47,13 +47,17 @@ public class DidKeyResourceResolver implements DidResourceResolver {
             throw new IllegalArgumentException();
         }
 
+        if (url.query() != null || url.path() != null) {
+            throw new IllegalArgumentException();
+        }
+        
         // verification method?
-        if ("vm".equals(url.fragment()) || url.methodSpecificId().equals(url.fragment())) {
+        if (("vm".equals(url.fragment()) || url.methodSpecificId().equals(url.fragment()))) {
             return getMethod(url, options);
         }
 
         // DID document?
-        if (url.fragment() == null && url.query() == null && url.path() == null) {
+        if (url.fragment() == null) {
             var method = getMethod(url, options);
             return new Document(url.toDid(), List.of(method));
         }
