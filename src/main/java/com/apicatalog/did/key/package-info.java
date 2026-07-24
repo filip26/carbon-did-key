@@ -5,7 +5,7 @@
  * <ul>
  * <li>{@link com.apicatalog.did.key.DidKey} — an immutable representation of a
  * {@code did:key} identifier.</li>
- * <li>{@link com.apicatalog.did.key.DidKeyResolver} — a {@code DidResolver}
+ * <li>{@link com.apicatalog.did.key.LegacyDidKeyResolver} — a {@code DidResolver}
  * implementation for {@code did:key} identifiers.</li>
  * <li>{@link com.apicatalog.did.key.VerificationMethodProvider} — a functional
  * interface for creating

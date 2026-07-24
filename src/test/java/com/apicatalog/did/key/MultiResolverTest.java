@@ -29,7 +29,7 @@ import com.apicatalog.multicodec.MulticodecDecoder;
 class MultiResolverTest {
 
     static MulticodecDecoder CODECS = MulticodecDecoder.getInstance(Tag.Key);
-    static DidKeyResolver RESOLVER = DidKeyResolver.with(CODECS)
+    static LegacyDidKeyResolver RESOLVER = LegacyDidKeyResolver.with(CODECS)
             .multikey()
             .jwk()
 //            .verificationMethodId(key -> DidUrl.of(key, "vm"))
@@ -75,11 +75,11 @@ class MultiResolverTest {
 //            assertEquals(DidUrl.fragment(didKey, "vm"), method.id());
             assertEquals(didKey, method.controller());
 
-            if (DidKeyResolver.JWK_TYPE.equals(method.type())) {
+            if (LegacyDidKeyResolver.JWK_TYPE.equals(method.type())) {
 //                assertEquals(jwk, method.publicKeyJwk());
 //                assertNull(method.publicKeyMultibase());
 
-            } else if (DidKeyResolver.MULTIKEY_TYPE.equals(method.type())) {
+            } else if (LegacyDidKeyResolver.MULTIKEY_TYPE.equals(method.type())) {
 //                assertEquals(didKey.baseName(), method.publicKeyMultibase().baseName());
 //                assertArrayEquals(didKey.debased(), method.publicKeyMultibase().debased());
 //                assertNull(method.publicKeyJwk());
