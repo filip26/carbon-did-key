@@ -188,18 +188,6 @@ public record DidKey(
         return version;
     }
 
-    /**
-     * @return the {@link Multibase} encoding used, always base58btc for
-     *         {@code did:key}
-     */
-    public Multibase base() {
-        return Multibase.BASE_58_BTC;
-    }
-
-    public String baseName() {
-        return Multibase.BASE_58_BTC.name();
-    }
-
     public static boolean isMethodSpecificId(String input) {
         if (input == null || input.length() < 2) {
             return false;
