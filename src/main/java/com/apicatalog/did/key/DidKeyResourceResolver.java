@@ -25,6 +25,7 @@ public class DidKeyResourceResolver implements DidResourceResolver {
     public static final String OPTION_PUBLIC_KEY_FORMAT = "publicKeyFormat";
     public static final String OPTION_EXPERIMENTAL_KEY_TYPES = "enableExperimentalPublicKeyTypes";
     public static final String OPTION_DEFAULT_CONTEXT = "defaultContext";
+    public static final String OPTION_ENCRYPTION_KEY_DERIVATION = "encryptionKeyDerivation";
 
     private final Map<String, VerificationMethodProvider> methodProviders;
     

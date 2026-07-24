@@ -117,26 +117,13 @@ public record DidKey(
 
         var multibase = MULTIBASE.getBase(encoded)
                 .orElseThrow(() -> new IllegalArgumentException(
-                        "Invalid did:key encoding: expected multibase base58btc. did:key:" + methodSpecificId));
+                        "Invalid did:key: expected multibase-ecoded base58btc or base64url, but was did:key:"
+                                + methodSpecificId + "."));
 
         final byte[] debased = multibase.decode(encoded);
 
         return new DidKey(version, methodSpecificId, debased);
     }
-
-//    /**
-//     * Creates a new {@link DidKey} directly from multicodec-encoded public key
-//     * bytes.
-//     *
-//     * @param key the multicodec-encoded public key bytes
-//     * @return a new {@link DidKey} instance
-//     */
-//    public static final DidKey from(byte[] publicKey) {
-//        return new DidKey(
-//                DEFAULT_VERSION,
-//                Multibase.BASE_58_BTC.encode(publicKey),    //FIXME
-//                publicKey);
-//    }
 
     /**
      * Tests whether the given {@link Did} is a {@code did:key}.
@@ -167,7 +154,7 @@ public record DidKey(
     public static boolean isDidKey(final URI uri) {
         return uri != null
                 && uri.getRawSchemeSpecificPart().startsWith(METHOD_NAME + ":")
-                && Did.isDid(uri);
+                && isMethodSpecificId(uri.getRawSchemeSpecificPart().substring(METHOD_NAME.length() + 1));
     }
 
     /**
@@ -179,7 +166,19 @@ public record DidKey(
     public static boolean isDidKey(final String uri) {
         return uri != null
                 && uri.startsWith(Did.SCHEME + ":" + METHOD_NAME + ":")
-                && Did.isDid(uri);
+                && isMethodSpecificId(uri.substring(Did.SCHEME.length() + METHOD_NAME.length() + 2));
+    }
+
+    public Did toDid() {
+        return new Did(METHOD_NAME, methodSpecificId);
+    }
+
+    @Override
+    public final String toString() {
+        if (version == null || DEFAULT_VERSION.equals(version)) {
+            return Did.SCHEME + ":" + METHOD_NAME + ":" + methodSpecificId;
+        }
+        return Did.SCHEME + ":" + METHOD_NAME + ":" + version + ":" + methodSpecificId;
     }
 
     /**
