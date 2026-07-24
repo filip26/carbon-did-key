@@ -16,7 +16,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.apicatalog.did.DidUrl;
-import com.apicatalog.did.document.DidVerificationMethod;
+import com.apicatalog.did.DidVerificationMethod;
 import com.apicatalog.did.key.DidKey;
 import com.apicatalog.did.key.VerificationMethodProvider;
 import com.apicatalog.multicodec.Multicodec;
@@ -90,17 +90,18 @@ public class DidKeyJwkMethodProvider implements VerificationMethodProvider {
     @Override
     public DidVerificationMethod get(DidUrl id, DidKey key, String type) {
 
-        final JwkProvider provider = jwkProviders.get(key.codec());
-
-        if (provider == null) {
-            throw new IllegalArgumentException("Curve type [" + key.codec() + "] is not supported.");
-        }
-
-        return DidVerificationMethod.jwk(
-                id,
-                type,
-                key,
-                provider.get(key));
+//        final JwkProvider provider = jwkProviders.get(key.codec());
+//
+//        if (provider == null) {
+//            throw new IllegalArgumentException("Curve type [" + key.codec() + "] is not supported.");
+//        }
+//
+//        return DidVerificationMethod.jwk(
+//                id,
+//                type,
+//                key,
+//                provider.get(key));
+        return null;//TODO
     }
 
     /**
@@ -114,7 +115,7 @@ public class DidKeyJwkMethodProvider implements VerificationMethodProvider {
         Map<String, Object> jwk = new LinkedHashMap<>();
         jwk.put("kty", "OKP");
         jwk.put("crv", curveType);
-        jwk.put("x", BASE64_ENCODER.encodeToString(key.decoded()));
+//FIXME        jwk.put("x", BASE64_ENCODER.encodeToString(key.decoded()));
         return Collections.unmodifiableMap(jwk);
     }
 
@@ -130,13 +131,13 @@ public class DidKeyJwkMethodProvider implements VerificationMethodProvider {
     public static final Map<String, Object> getECJwk(String curve, String curveSpecName, DidKey key, int length) {
 
         try {
-            final ECPoint point = decompress(curveSpecName, key.decoded());
+//FIXME            final ECPoint point = decompress(curveSpecName, key.decoded());
 
             final Map<String, Object> jwk = new LinkedHashMap<>();
             jwk.put("kty", "EC");
             jwk.put("crv", curve);
-            jwk.put("x", BASE64_ENCODER.encodeToString(normalize(point.getAffineX().toByteArray(), length)));
-            jwk.put("y", BASE64_ENCODER.encodeToString(normalize(point.getAffineY().toByteArray(), length)));
+//            jwk.put("x", BASE64_ENCODER.encodeToString(normalize(point.getAffineX().toByteArray(), length)));
+//            jwk.put("y", BASE64_ENCODER.encodeToString(normalize(point.getAffineY().toByteArray(), length)));
             return Collections.unmodifiableMap(jwk);
 
         } catch (Exception e) {

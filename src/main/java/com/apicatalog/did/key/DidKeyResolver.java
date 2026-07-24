@@ -11,12 +11,12 @@ import java.util.Objects;
 import java.util.function.Function;
 
 import com.apicatalog.did.Did;
+import com.apicatalog.did.DidDocument;
 import com.apicatalog.did.DidUrl;
-import com.apicatalog.did.document.DidDocument;
-import com.apicatalog.did.document.DidVerificationMethod;
+import com.apicatalog.did.DidVerificationMethod;
 import com.apicatalog.did.key.jwk.DidKeyJwkMethodProvider;
 import com.apicatalog.did.resolver.DidResolutionException;
-import com.apicatalog.did.resolver.DidResolutionException.Code;
+import com.apicatalog.did.resolver.DidResolutionException.ErrorCode;
 import com.apicatalog.did.resolver.DidResolver;
 import com.apicatalog.did.resolver.ResolvedDidDocument;
 import com.apicatalog.multicodec.MulticodecDecoder;
@@ -93,7 +93,7 @@ public class DidKeyResolver implements DidResolver {
     public ResolvedDidDocument resolve(final URI did) throws DidResolutionException {
         Objects.requireNonNull(did, "DID URI must not be null.");
         try {
-            return resolve(DidKey.of(did, codecs));
+            return resolve(DidKey.from(did));
         } catch (IllegalArgumentException e) {
             throw new DidResolutionException(did.toASCIIString(), "Failed to resolve DID URI: " + did, e);
         }
@@ -103,25 +103,26 @@ public class DidKeyResolver implements DidResolver {
      * Resolves a {@link Did} into a {@link ResolvedDidDocument}.
      *
      * @param did the DID to resolve
+     * @param options
      * @return the resolved DID document
      * @throws NullPointerException   if {@code did} is {@code null}
      * @throws DidResolutionException if resolution fails
      */
     @Override
-    public ResolvedDidDocument resolve(final Did did) throws DidResolutionException {
+    public ResolvedDidDocument resolve(Did did, Map<String, Object> options) throws DidResolutionException {
         Objects.requireNonNull(did, "DID must not be null.");
 
-        if (!DidKey.METHOD_NAME.equals(did.getMethod())) {
+        if (!DidKey.METHOD_NAME.equals(did.method())) {
             throw new DidResolutionException(did.toString(),
-                    Code.UnsupportedMethod,
-                    "Unsupported DID method '" + did.getMethod() + "', expected 'key'.");
+                    ErrorCode.UNSUPPORTED_METHOD,
+                    "Unsupported DID method '" + did.method() + "', expected 'key'.");
         }
 
         final DidKey didKey;
         try {
-            didKey = DidKey.of(did, codecs);
+            didKey = DidKey.from(did);
         } catch (IllegalArgumentException e) {
-            throw new DidResolutionException(did.toString(), Code.InvalidDid, "Invalid did:key value: " + did, e);
+            throw new DidResolutionException(did.toString(), ErrorCode.INVALID_DID, "Invalid did:key value: " + did, e);
         }
 
         return resolve(didKey);
@@ -140,11 +141,13 @@ public class DidKeyResolver implements DidResolver {
 
         if (encryptionKeyDerivation) {
             throw new DidResolutionException(didKey.toString(),
-                    Code.Internal,
+                    ErrorCode.INTERNAL,
                     "Encryption key derivation is not yet supported.");
         }
 
-        return ResolvedDidDocument.of(Document.of(didKey, provider.apply(didKey)));
+//        return ResolvedDidDocument.of(Document.of(didKey, provider.apply(didKey)));
+        //FIXME
+        return null;
     }
 
     /**
@@ -156,11 +159,12 @@ public class DidKeyResolver implements DidResolver {
      * @return a new verification method
      */
     public static DidVerificationMethod multikey(final DidUrl id, final DidKey key, final String type) {
-        return DidVerificationMethod.multibase(
-                id,
-                type,
-                key,
-                key);
+        return null;//TODO
+//        return DidVerificationMethod.multibase(
+//                id,
+//                type,
+//                key,
+//                key);
     }
 
     /** @return {@code true} if encryption key derivation is enabled */
@@ -191,7 +195,7 @@ public class DidKeyResolver implements DidResolver {
         protected Builder(final MulticodecDecoder codecs) {
             this.codecs = codecs;
             this.providers = new LinkedHashMap<>();
-            this.keyToId = key -> DidUrl.fragment(key, key.getMethodSpecificId());
+//            this.keyToId = key -> DidUrl.of(key, key.methodSpecificId());
         }
 
         /**
@@ -264,7 +268,8 @@ public class DidKeyResolver implements DidResolver {
                 final Entry<String, VerificationMethodProvider> provider = providers.entrySet().iterator().next();
                 return new DidKeyResolver(
                         codecs,
-                        key -> Collections.singleton(provider.getValue().get(keyToId.apply(key), key, provider.getKey())),
+                        key -> Collections
+                                .singleton(provider.getValue().get(keyToId.apply(key), key, provider.getKey())),
                         keyToId);
             }
             return new DidKeyResolver(
@@ -292,48 +297,48 @@ public class DidKeyResolver implements DidResolver {
     /**
      * Minimal DID Document implementation used by {@link DidKeyResolver}.
      */
-    static final class Document implements DidDocument {
-
-        final Did id;
-        final Collection<DidVerificationMethod> method;
-
-        Document(Did id, Collection<DidVerificationMethod> method) {
-            this.id = Objects.requireNonNull(id, "DID must not be null.");
-            this.method = Objects.requireNonNull(method, "Verification methods must not be null.");
-        }
-
-        public static Document of(Did id, Collection<DidVerificationMethod> methods) {
-            return new Document(id, methods);
-        }
-
-        @Override
-        public Did id() {
-            return id;
-        }
-
-        @Override
-        public Collection<DidVerificationMethod> verification() {
-            return method;
-        }
-
-        @Override
-        public Collection<DidVerificationMethod> authentication() {
-            return method;
-        }
-
-        @Override
-        public Collection<DidVerificationMethod> assertion() {
-            return method;
-        }
-
-        @Override
-        public Collection<DidVerificationMethod> capabilityInvocation() {
-            return method;
-        }
-
-        @Override
-        public Collection<DidVerificationMethod> capabilityDelegation() {
-            return method;
-        }
-    }
+//    static final class Document implements DidDocument {
+//
+//        final Did id;
+//        final Collection<DidVerificationMethod> method;
+//
+//        Document(Did id, Collection<DidVerificationMethod> method) {
+//            this.id = Objects.requireNonNull(id, "DID must not be null.");
+//            this.method = Objects.requireNonNull(method, "Verification methods must not be null.");
+//        }
+//
+//        public static Document of(Did id, Collection<DidVerificationMethod> methods) {
+//            return new Document(id, methods);
+//        }
+//
+//        @Override
+//        public Did id() {
+//            return id;
+//        }
+//
+//        @Override
+//        public Collection<DidVerificationMethod> verification() {
+//            return method;
+//        }
+//
+//        @Override
+//        public Collection<DidVerificationMethod> authentication() {
+//            return method;
+//        }
+//
+//        @Override
+//        public Collection<DidVerificationMethod> assertion() {
+//            return method;
+//        }
+//
+//        @Override
+//        public Collection<DidVerificationMethod> capabilityInvocation() {
+//            return method;
+//        }
+//
+//        @Override
+//        public Collection<DidVerificationMethod> capabilityDelegation() {
+//            return method;
+//        }
+//    }
 }

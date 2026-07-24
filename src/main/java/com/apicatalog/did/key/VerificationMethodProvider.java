@@ -1,7 +1,7 @@
 package com.apicatalog.did.key;
 
 import com.apicatalog.did.DidUrl;
-import com.apicatalog.did.document.DidVerificationMethod;
+import com.apicatalog.did.DidVerificationMethod;
 
 /**
  * Provider of {@link DidVerificationMethod} instances for a given
