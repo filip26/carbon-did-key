@@ -88,7 +88,7 @@ public class DidKeyJwkMethodProvider implements VerificationMethodProvider {
     }
 
     @Override
-    public DidVerificationMethod get(DidUrl id, DidKey key, String type) {
+    public DidVerificationMethod get(DidUrl id, DidKey key) {
 
 //        final JwkProvider provider = jwkProviders.get(key.codec());
 //

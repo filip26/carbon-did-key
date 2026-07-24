@@ -46,12 +46,40 @@ public record DidKey(
     }
 
     public static final DidKey parse(final String did) {
-        return null;
+
+        if (!did.startsWith(Did.SCHEME + ":" + METHOD_NAME + ":")) {
+            throw new IllegalArgumentException();
+        }
+
+        var methodSpecificId = did.substring(Did.SCHEME.length() + METHOD_NAME.length() + 2);
+
+        if (!isMethodSpecificId(methodSpecificId)) {
+            throw new IllegalArgumentException();
+        }
+
+        return from(methodSpecificId);
     }
 
-    public static DidKey from(URI did) {
-        // TODO Auto-generated method stub
-        return null;
+    public static DidKey from(URI uri) {
+
+        Objects.requireNonNull(uri);
+
+        if (!Did.SCHEME.equals(uri.getScheme())
+                || uri.getRawSchemeSpecificPart() == null
+                || !uri.getRawSchemeSpecificPart().startsWith(METHOD_NAME + ":")
+                || isNotBlank(uri.getAuthority())
+                || isNotBlank(uri.getUserInfo())
+                || isNotBlank(uri.getHost())
+                || isNotBlank(uri.getRawPath())
+                || isNotBlank(uri.getRawQuery())
+                || uri.getRawFragment() != null) {
+
+            throw new IllegalArgumentException();
+        }
+
+        var methodSpecificId = uri.getRawSchemeSpecificPart().substring(METHOD_NAME.length() + 1);
+
+        return from(methodSpecificId);
     }
 
     /**
@@ -96,19 +124,19 @@ public record DidKey(
         return new DidKey(version, methodSpecificId, debased);
     }
 
-    /**
-     * Creates a new {@link DidKey} directly from multicodec-encoded public key
-     * bytes.
-     *
-     * @param key the multicodec-encoded public key bytes
-     * @return a new {@link DidKey} instance
-     */
-    public static final DidKey from(byte[] publicKey) {
-        return new DidKey(
-                DEFAULT_VERSION,
-                Multibase.BASE_58_BTC.encode(publicKey),
-                publicKey);
-    }
+//    /**
+//     * Creates a new {@link DidKey} directly from multicodec-encoded public key
+//     * bytes.
+//     *
+//     * @param key the multicodec-encoded public key bytes
+//     * @return a new {@link DidKey} instance
+//     */
+//    public static final DidKey from(byte[] publicKey) {
+//        return new DidKey(
+//                DEFAULT_VERSION,
+//                Multibase.BASE_58_BTC.encode(publicKey),    //FIXME
+//                publicKey);
+//    }
 
     /**
      * Tests whether the given {@link Did} is a {@code did:key}.
@@ -121,12 +149,12 @@ public record DidKey(
     }
 
     /**
-     * Tests whether the given {@link DidUrl} is a {@code did:key}.
+     * Tests whether the given {@link DidUrl} contains a {@code did:key}.
      *
      * @param did the DID to test
      * @return {@code true} if the DID uses the {@code did:key} method
      */
-    public static boolean isDidKey(DidUrl url) {
+    public static boolean containsDidKey(DidUrl url) {
         return url != null && METHOD_NAME.equals(url.method());
     }
 
@@ -211,6 +239,14 @@ public record DidKey(
         }
 
         return false;
+    }
+
+    /**
+     * @return {@code true} if the value is non-null and not blank after
+     *         {@code trim()}
+     */
+    private static final boolean isNotBlank(String value) {
+        return value != null && !value.isBlank();
     }
 
 }

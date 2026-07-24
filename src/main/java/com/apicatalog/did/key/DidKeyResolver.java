@@ -241,7 +241,8 @@ public class DidKeyResolver implements DidResolver {
 
         /** Registers a multibase verification method under the given type URI. */
         public Builder multibase(String methodType) {
-            return method(methodType, DidKeyResolver::multikey);
+//            return method(methodType, DidKeyResolver::multikey);
+            return null;
         }
 
         /** Registers {@link #JWK_TYPE} verification methods. */
@@ -269,7 +270,9 @@ public class DidKeyResolver implements DidResolver {
                 return new DidKeyResolver(
                         codecs,
                         key -> Collections
-                                .singleton(provider.getValue().get(keyToId.apply(key), key, provider.getKey())),
+                                .singleton(provider.getValue().get(keyToId.apply(key), key
+                                        //, provider.getKey()
+                                        )),
                         keyToId);
             }
             return new DidKeyResolver(
@@ -289,7 +292,10 @@ public class DidKeyResolver implements DidResolver {
 
         Collection<DidVerificationMethod> methods = new ArrayList<>(providers.size());
         for (Entry<String, VerificationMethodProvider> provider : providers.entrySet()) {
-            methods.add(provider.getValue().get(keyToId.apply(didKey), didKey, provider.getKey()));
+            methods.add(provider.getValue().get(keyToId.apply(didKey), didKey 
+//                    ,provider.getKey()
+                    )
+                    );
         }
         return Collections.unmodifiableCollection(methods);
     }
