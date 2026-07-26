@@ -7,11 +7,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 
 import com.apicatalog.did.Did;
 import com.apicatalog.did.DidDocument;
 import com.apicatalog.did.DidDocument.Relationship;
-import com.apicatalog.did.DidDocument.WithMetadata;
 import com.apicatalog.did.DidUrl;
 import com.apicatalog.did.VerificationMethod;
 import com.apicatalog.did.primitive.MultiKey;
@@ -25,8 +25,10 @@ import com.apicatalog.did.primitive.MultiKey;
  * </p>
  *
  */
-public class DidKeyResolver
-        implements VerificationMethod.Resolver, VerificationMethod.Dereferencer, DidDocument.Resolver {
+public class DidKeyResolver implements
+        VerificationMethod.Resolver,
+        VerificationMethod.Dereferencer,
+        DidDocument.Resolver {
 
     /**
      * Provider of {@link VerificationMethod} instances for a given {@link DidKey}.
@@ -57,16 +59,18 @@ public class DidKeyResolver
     public static final String OPTION_DEFAULT_CONTEXT = "defaultContext";
     public static final String OPTION_ENCRYPTION_KEY_DERIVATION = "encryptionKeyDerivation";
 
+    private final DidKey.Parser didKeyParser;
     private final Map<String, MethodFactory> methodProviders;
     private final String defaultMethod;
 
-    public DidKeyResolver(Map<String, MethodFactory> methodProviders, String defaultMethod) {
+    public DidKeyResolver(DidKey.Parser didKeyParser, Map<String, MethodFactory> methodProviders, String defaultMethod) {
+        this.didKeyParser = didKeyParser;
         this.methodProviders = methodProviders;
         this.defaultMethod = defaultMethod;
     }
 
     @Override
-    public WithMetadata resolve(DidUrl url, Map<String, Object> options) {
+    public DidDocument.WithMetadata resolve(DidUrl url, Map<String, Object> options) {
         if (!DidKey.isDidKey(url)) {
             throw new IllegalArgumentException();
         }
@@ -74,7 +78,7 @@ public class DidKeyResolver
         if (url.query() != null || url.path() != null) {
             throw new IllegalArgumentException();
         }
-        var didKey = DidKey.from(url.methodSpecificId());
+        var didKey = didKeyParser.from(url.methodSpecificId());
 
         var type = options.getOrDefault(OPTION_PUBLIC_KEY_FORMAT, defaultMethod);
 
@@ -95,7 +99,7 @@ public class DidKeyResolver
             throw new IllegalArgumentException();
         }
 
-        var didKey = DidKey.from(url.methodSpecificId());
+        var didKey = didKeyParser.from(url.methodSpecificId());
 
         var type = options.getOrDefault(OPTION_PUBLIC_KEY_FORMAT, defaultMethod);
 
@@ -140,6 +144,7 @@ public class DidKeyResolver
 
     public static class Builder {
 
+        private Function<String, byte[]> multibaseDecoder;
         private final Map<String, MethodFactory> methods;
         private String defaultMethod;
 
@@ -168,12 +173,17 @@ public class DidKeyResolver
             this.methods.put(MultiKey.TYPE_NAME, DidKeyResolver::createMultiKey);
             return this;
         }
+        
+        public Builder multibaseDecoder(Function<String, byte[]> multibaseDecoder) {
+            this.multibaseDecoder = multibaseDecoder;
+            return this;
+        }
 
         public Builder defaultMethod(String type) {
             this.defaultMethod = type;
             return this;
         }
-        
+
         /**
          * Builds a new {@link DidKeyResolver}.
          *
@@ -182,6 +192,10 @@ public class DidKeyResolver
          */
         public DidKeyResolver build() {
 
+            if (multibaseDecoder == null) {
+                throw new IllegalArgumentException();
+            }
+            
             if (methods.isEmpty()) {
                 throw new IllegalStateException("At least one verification method provider must be registered.");
             }
@@ -190,7 +204,7 @@ public class DidKeyResolver
                 defaultMethod = methods.keySet().iterator().next();
             }
 
-            return new DidKeyResolver(Map.copyOf(methods), defaultMethod);
+            return new DidKeyResolver(DidKey.parser(multibaseDecoder), Map.copyOf(methods), defaultMethod);
         }
     }
 

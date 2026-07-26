@@ -2,12 +2,10 @@ package com.apicatalog.did.key;
 
 import java.net.URI;
 import java.util.Objects;
+import java.util.function.Function;
 
 import com.apicatalog.did.Did;
 import com.apicatalog.did.DidUrl;
-import com.apicatalog.multibase.Multibase;
-import com.apicatalog.multibase.MultibaseDecoder;
-import com.apicatalog.uvarint.UVarInt;
 
 /**
  * Immutable {@code did:key} identifier.
@@ -30,7 +28,6 @@ import com.apicatalog.uvarint.UVarInt;
 public record DidKey(
         String version,
         String methodSpecificId,
-        int multicodec,
         byte[] publicKey) {
 
     /** DID method name for {@code did:key}. */
@@ -39,97 +36,8 @@ public record DidKey(
     /** Default version string. */
     public static final String DEFAULT_VERSION = "1";
 
-    private static final MultibaseDecoder MULTIBASE = MultibaseDecoder.getInstance(
-            Multibase.BASE_58_BTC,
-            Multibase.BASE_64_URL);
-
     public String method() {
         return METHOD_NAME;
-    }
-
-    public static final DidKey parse(final String did) {
-
-        if (!did.startsWith(Did.SCHEME + ":" + METHOD_NAME + ":")) {
-            throw new IllegalArgumentException();
-        }
-
-        var methodSpecificId = did.substring(Did.SCHEME.length() + METHOD_NAME.length() + 2);
-
-        if (!isMethodSpecificId(methodSpecificId)) {
-            throw new IllegalArgumentException();
-        }
-
-        return from(methodSpecificId);
-    }
-
-    public static DidKey from(URI uri) {
-
-        Objects.requireNonNull(uri);
-
-        if (!Did.SCHEME.equals(uri.getScheme())
-                || uri.getRawSchemeSpecificPart() == null
-                || !uri.getRawSchemeSpecificPart().startsWith(METHOD_NAME + ":")
-                || isNotBlank(uri.getAuthority())
-                || isNotBlank(uri.getUserInfo())
-                || isNotBlank(uri.getHost())
-                || isNotBlank(uri.getRawPath())
-                || isNotBlank(uri.getRawQuery())
-                || uri.getRawFragment() != null) {
-
-            throw new IllegalArgumentException();
-        }
-
-        var methodSpecificId = uri.getRawSchemeSpecificPart().substring(METHOD_NAME.length() + 1);
-
-        return from(methodSpecificId);
-    }
-
-    /**
-     * Creates a new {@link DidKey} instance from the given {@link Did}.
-     *
-     * @param did the {@link Did} to interpret as a {@code did:key}
-     * @return a new {@link DidKey} instance
-     *
-     * @throws IllegalArgumentException if the given {@link Did} is not a valid
-     *                                  {@code did:key}
-     */
-    public static final DidKey from(final Did did) {
-        Objects.requireNonNull(did);
-
-        if (!METHOD_NAME.equalsIgnoreCase(did.method())) {
-            throw new IllegalArgumentException(
-                    "Not a did:key DID; unsupported method '" + did.method() + "'. DID [" + did + "].");
-        }
-
-        return from(did.methodSpecificId());
-    }
-
-    public static final DidKey from(final String methodSpecificId) {
-
-        final var parts = methodSpecificId.split(":", 2);
-
-        String version = DEFAULT_VERSION;
-        String encoded = parts[0];
-
-        // explicit version present
-        if (parts.length == 2) {
-            version = parts[0];
-            encoded = parts[1];
-        }
-
-        var multibase = MULTIBASE.getBase(encoded)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Invalid did:key: expected multibase-ecoded base58btc or base64url, but was did:key:"
-                                + methodSpecificId + "."));
-
-        var debased = multibase.decode(encoded);
-  
-        var multicodec = UVarInt.decode(debased);
-//        var uvarintLength = UVarInt.byteLength(multicodec);
-        
-//        var publicKey = Arrays.copyOfRange(debased, uvarintLength, debased.length);
-        
-        return new DidKey(version, methodSpecificId, (int)multicodec, debased);
     }
 
     /**
@@ -235,6 +143,10 @@ public record DidKey(
         return false;
     }
 
+    public static Parser parser(Function<String, byte[]> multibaseDecoder) {
+        return new Parser(multibaseDecoder);
+    }
+
     /**
      * @return {@code true} if the value is non-null and not blank after
      *         {@code trim()}
@@ -243,4 +155,97 @@ public record DidKey(
         return value != null && !value.isBlank();
     }
 
+    public static class Parser {
+
+        private final Function<String, byte[]> multibaseDecoder;
+
+        private Parser(Function<String, byte[]> multibaseDecoder) {
+            this.multibaseDecoder = multibaseDecoder;
+        }
+
+        public DidKey parse(final String did) {
+
+            if (!did.startsWith(Did.SCHEME + ":" + METHOD_NAME + ":")) {
+                throw new IllegalArgumentException();
+            }
+
+            var methodSpecificId = did.substring(Did.SCHEME.length() + METHOD_NAME.length() + 2);
+
+            if (!isMethodSpecificId(methodSpecificId)) {
+                throw new IllegalArgumentException();
+            }
+
+            return from(methodSpecificId);
+        }
+
+        public DidKey from(URI uri) {
+
+            Objects.requireNonNull(uri);
+
+            if (!Did.SCHEME.equals(uri.getScheme())
+                    || uri.getRawSchemeSpecificPart() == null
+                    || !uri.getRawSchemeSpecificPart().startsWith(METHOD_NAME + ":")
+                    || isNotBlank(uri.getAuthority())
+                    || isNotBlank(uri.getUserInfo())
+                    || isNotBlank(uri.getHost())
+                    || isNotBlank(uri.getRawPath())
+                    || isNotBlank(uri.getRawQuery())
+                    || uri.getRawFragment() != null) {
+
+                throw new IllegalArgumentException();
+            }
+
+            var methodSpecificId = uri.getRawSchemeSpecificPart().substring(METHOD_NAME.length() + 1);
+
+            return from(methodSpecificId);
+        }
+
+        /**
+         * Creates a new {@link DidKey} instance from the given {@link Did}.
+         *
+         * @param did the {@link Did} to interpret as a {@code did:key}
+         * @return a new {@link DidKey} instance
+         *
+         * @throws IllegalArgumentException if the given {@link Did} is not a valid
+         *                                  {@code did:key}
+         */
+        public final DidKey from(final Did did) {
+            Objects.requireNonNull(did);
+
+            if (!METHOD_NAME.equalsIgnoreCase(did.method())) {
+                throw new IllegalArgumentException(
+                        "Not a did:key DID; unsupported method '" + did.method() + "'. DID [" + did + "].");
+            }
+
+            return from(did.methodSpecificId());
+        }
+
+        public final DidKey from(final String methodSpecificId) {
+
+            final var parts = methodSpecificId.split(":", 2);
+
+            String version = DEFAULT_VERSION;
+            String encoded = parts[0];
+
+            // explicit version present
+            if (parts.length == 2) {
+                version = parts[0];
+                encoded = parts[1];
+            }
+
+//            var multibase = MULTIBASE.getBase(encoded)
+//                    .orElseThrow(() -> new IllegalArgumentException(
+//                            "Invalid did:key: expected multibase-ecoded base58btc or base64url, but was did:key:"
+//                                    + methodSpecificId + "."));
+
+            var debased = multibaseDecoder.apply(encoded);
+
+//            var multicodec = UVarInt.decode(debased);
+//            var uvarintLength = UVarInt.byteLength(multicodec);
+
+//            var publicKey = Arrays.copyOfRange(debased, uvarintLength, debased.length);
+
+            return new DidKey(version, methodSpecificId, debased);
+        }
+    }
 }

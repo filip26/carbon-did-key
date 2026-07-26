@@ -1,12 +1,8 @@
 package com.apicatalog.did.key;
 
-import java.util.Collection;
-import java.util.function.Function;
-
-import com.apicatalog.did.DidUrl;
 import com.apicatalog.did.DidDocument;
+import com.apicatalog.did.DidUrl;
 import com.apicatalog.did.VerificationMethod;
-import com.apicatalog.multicodec.MulticodecDecoder;
 
 /**
  * implementation for the {@code did:key} method.
@@ -40,23 +36,23 @@ public class LegacyDidKeyResolver {
     /** Verification method type URI for JsonWebKey. */
     public static String JWK_TYPE = "https://w3id.org/security#JsonWebKey";
 
-    /** Supported multicodecs. */
-    protected final MulticodecDecoder codecs;
-    /** Provider that derives verification methods from a {@link DidKey}. */
-    protected final Function<DidKey, Collection<VerificationMethod>> provider;
-    /** Provides unique verification method identifier for the given did:key */
-    protected final Function<DidKey, DidUrl> keyToId;
-    /** Placeholder for optional encryption key derivation support. */
-    protected boolean encryptionKeyDerivation;
-
-    protected LegacyDidKeyResolver(final MulticodecDecoder codecs,
-            final Function<DidKey, Collection<VerificationMethod>> provider,
-            final Function<DidKey, DidUrl> keyToId) {
-        this.codecs = codecs;
-        this.provider = provider;
-        this.keyToId = keyToId;
-        this.encryptionKeyDerivation = false;
-    }
+//    /** Supported multicodecs. */
+//    protected final MulticodecDecoder codecs;
+//    /** Provider that derives verification methods from a {@link DidKey}. */
+//    protected final Function<DidKey, Collection<VerificationMethod>> provider;
+//    /** Provides unique verification method identifier for the given did:key */
+//    protected final Function<DidKey, DidUrl> keyToId;
+//    /** Placeholder for optional encryption key derivation support. */
+//    protected boolean encryptionKeyDerivation;
+//
+//    protected LegacyDidKeyResolver(final MulticodecDecoder codecs,
+//            final Function<DidKey, Collection<VerificationMethod>> provider,
+//            final Function<DidKey, DidUrl> keyToId) {
+//        this.codecs = codecs;
+//        this.provider = provider;
+//        this.keyToId = keyToId;
+//        this.encryptionKeyDerivation = false;
+//    }
 //
 //    /**
 //     * Creates a new {@link Builder} for constructing a {@link LegacyDidKeyResolver}.
@@ -153,22 +149,22 @@ public class LegacyDidKeyResolver {
 //                key,
 //                key);
     }
-
-    /** @return {@code true} if encryption key derivation is enabled */
-    public boolean encryptionKeyDerivation() {
-        return this.encryptionKeyDerivation;
-    }
-
-    /**
-     * Enables or disables encryption key derivation.
-     *
-     * @param encryptionKeyDerivation flag value
-     * @return this resolver instance
-     */
-    public LegacyDidKeyResolver encryptionKeyDerivation(boolean encryptionKeyDerivation) {
-        this.encryptionKeyDerivation = encryptionKeyDerivation;
-        return this;
-    }
+//
+//    /** @return {@code true} if encryption key derivation is enabled */
+//    public boolean encryptionKeyDerivation() {
+//        return this.encryptionKeyDerivation;
+//    }
+//
+//    /**
+//     * Enables or disables encryption key derivation.
+//     *
+//     * @param encryptionKeyDerivation flag value
+//     * @return this resolver instance
+//     */
+//    public LegacyDidKeyResolver encryptionKeyDerivation(boolean encryptionKeyDerivation) {
+//        this.encryptionKeyDerivation = encryptionKeyDerivation;
+//        return this;
+//    }
 
     /**
      * Builder for {@link LegacyDidKeyResolver}.

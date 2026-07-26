@@ -31,7 +31,7 @@ class JwkResolverTest {
     @MethodSource({ "vectors" })
     void resolve(URI did, Map<String, Object> expected) throws ResolutionException {
 
-        final DidKey didKey = DidKey.from(did);
+//        final DidKey didKey = DidKey.from(did);
 
 //        ResolvedDidDocument result = RESOLVER.resolve(didKey);
 //        assertNotNull(result);

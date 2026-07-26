@@ -28,7 +28,7 @@ class MultikeyResolverTest {
     @MethodSource({ "vectors" })
     void resolve(URI did) throws ResolutionException {
 
-        final DidKey didKey = DidKey.from(did);
+//        final DidKey didKey = DidKey.from(did);
 
 //        ResolvedDidDocument result = RESOLVER.resolve(didKey);
 //        assertNotNull(result);
