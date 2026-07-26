@@ -7,7 +7,7 @@
     <groupId>com.apicatalog</groupId>
     <artifactId>carbon-did-key</artifactId>
 
-    <version>1.0.0-M1</version>
+    <version>0.11.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <url>https://github.com/filip26/carbon-did-key</url>
@@ -51,12 +51,11 @@
     <inceptionYear>2022</inceptionYear>
 
     <properties>
+        <maven.compiler.release>25</maven.compiler.release>
+
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <argLine>-Dfile.encoding=UTF-8</argLine>
-
-        <maven.compiler.target>25</maven.compiler.target>
-        <maven.compiler.source>25</maven.compiler.source>
 
         <carbon.did.version>0.10.0</carbon.did.version>
 

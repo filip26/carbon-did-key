@@ -4,7 +4,7 @@
  *
  * The {@code jwk} subpackage contains:
  * <ul>
- * <li>{@link com.apicatalog.did.key.jwk.DidKeyJwkMethodProvider} – a provider
+ * <li>{@link com.apicatalog.did.key.jwk.JwkMethodProvider} – a provider
  * that maps supported {@code did:key} codecs to JWK representations.</li>
  * <li>{@link com.apicatalog.did.key.jwk.JwkProvider} – a functional interface
  * for custom JWK generation strategies.</li>

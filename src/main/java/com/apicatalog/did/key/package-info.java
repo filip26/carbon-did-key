@@ -9,7 +9,7 @@
  * implementation for {@code did:key} identifiers.</li>
  * <li>{@link com.apicatalog.did.key.VerificationMethodProvider} — a functional
  * interface for creating
- * {@link com.apicatalog.did.DidVerificationMethod} instances from
+ * {@link com.apicatalog.did.VerificationMethod} instances from
  * {@link com.apicatalog.did.key.DidKey} identifiers.</li>
  * </ul>
  *

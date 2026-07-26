@@ -7,6 +7,7 @@ import com.apicatalog.did.Did;
 import com.apicatalog.did.DidUrl;
 import com.apicatalog.multibase.Multibase;
 import com.apicatalog.multibase.MultibaseDecoder;
+import com.apicatalog.uvarint.UVarInt;
 
 /**
  * Immutable {@code did:key} identifier.
@@ -29,6 +30,7 @@ import com.apicatalog.multibase.MultibaseDecoder;
 public record DidKey(
         String version,
         String methodSpecificId,
+        int multicodec,
         byte[] publicKey) {
 
     /** DID method name for {@code did:key}. */
@@ -120,9 +122,14 @@ public record DidKey(
                         "Invalid did:key: expected multibase-ecoded base58btc or base64url, but was did:key:"
                                 + methodSpecificId + "."));
 
-        final byte[] debased = multibase.decode(encoded);
-
-        return new DidKey(version, methodSpecificId, debased);
+        var debased = multibase.decode(encoded);
+  
+        var multicodec = UVarInt.decode(debased);
+//        var uvarintLength = UVarInt.byteLength(multicodec);
+        
+//        var publicKey = Arrays.copyOfRange(debased, uvarintLength, debased.length);
+        
+        return new DidKey(version, methodSpecificId, (int)multicodec, debased);
     }
 
     /**
@@ -138,10 +145,10 @@ public record DidKey(
     /**
      * Tests whether the given {@link DidUrl} contains a {@code did:key}.
      *
-     * @param did the DID to test
+     * @param url the DID URL to test
      * @return {@code true} if the DID uses the {@code did:key} method
      */
-    public static boolean containsDidKey(DidUrl url) {
+    public static boolean isDidKey(DidUrl url) {
         return url != null && METHOD_NAME.equals(url.method());
     }
 

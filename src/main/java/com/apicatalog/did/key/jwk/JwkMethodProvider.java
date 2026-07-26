@@ -16,9 +16,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.apicatalog.did.DidUrl;
-import com.apicatalog.did.DidVerificationMethod;
+import com.apicatalog.did.VerificationMethod;
 import com.apicatalog.did.key.DidKey;
-import com.apicatalog.did.key.VerificationMethodProvider;
+import com.apicatalog.did.key.DidKeyResolver;
 import com.apicatalog.multicodec.Multicodec;
 import com.apicatalog.multicodec.codec.KeyCodec;
 
@@ -39,12 +39,12 @@ import com.apicatalog.multicodec.codec.KeyCodec;
  * The returned verification methods contain a JWK-formatted public key.
  * </p>
  */
-public class DidKeyJwkMethodProvider implements VerificationMethodProvider {
+public class JwkMethodProvider implements DidKeyResolver.MethodFactory {
 
     static final Encoder BASE64_ENCODER = Base64.getUrlEncoder().withoutPadding();
 
     /** Default provider instance with common key types pre-registered. */
-    static final DidKeyJwkMethodProvider DEFAULT = with(KeyCodec.ED25519_PUBLIC_KEY, key -> getJwk("Ed25519", key))
+    static final JwkMethodProvider DEFAULT = with(KeyCodec.ED25519_PUBLIC_KEY, key -> getJwk("Ed25519", key))
             .with(KeyCodec.BLS12_381_G1_PUBLIC_KEY, key -> getJwk("Bls12381G1", key))
             .with(KeyCodec.BLS12_381_G2_PUBLIC_KEY, key -> getJwk("Bls12381G2", key))
             .with(KeyCodec.P256_PUBLIC_KEY, key -> getECJwk("P-256", "secp256r1", key, 32))
@@ -54,16 +54,16 @@ public class DidKeyJwkMethodProvider implements VerificationMethodProvider {
 
     final Map<Multicodec, JwkProvider> jwkProviders;
 
-    protected DidKeyJwkMethodProvider(Map<Multicodec, JwkProvider> jwkProviders) {
+    protected JwkMethodProvider(Map<Multicodec, JwkProvider> jwkProviders) {
         this.jwkProviders = jwkProviders;
     }
 
     /**
      * Returns the default provider instance with built-in key type mappings.
      *
-     * @return default {@link DidKeyJwkMethodProvider}
+     * @return default {@link JwkMethodProvider}
      */
-    public static DidKeyJwkMethodProvider getInstance() {
+    public static JwkMethodProvider getInstance() {
         return DEFAULT;
     }
 
@@ -88,7 +88,7 @@ public class DidKeyJwkMethodProvider implements VerificationMethodProvider {
     }
 
     @Override
-    public DidVerificationMethod get(DidUrl id, DidKey key) {
+    public VerificationMethod createMethod(DidUrl id, DidKey key) {
 
 //        final JwkProvider provider = jwkProviders.get(key.codec());
 //
@@ -244,11 +244,11 @@ public class DidKeyJwkMethodProvider implements VerificationMethodProvider {
         }
 
         /** Builds the provider, falling back to default if empty. */
-        public DidKeyJwkMethodProvider build() {
+        public JwkMethodProvider build() {
             if (providers.isEmpty()) {
                 return DEFAULT;
             }
-            return new DidKeyJwkMethodProvider(Collections.unmodifiableMap(providers));
+            return new JwkMethodProvider(Collections.unmodifiableMap(providers));
         }
     }
 }
