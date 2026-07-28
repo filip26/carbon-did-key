@@ -233,17 +233,7 @@ public record DidKey(
                 encoded = parts[1];
             }
 
-//            var multibase = MULTIBASE.getBase(encoded)
-//                    .orElseThrow(() -> new IllegalArgumentException(
-//                            "Invalid did:key: expected multibase-ecoded base58btc or base64url, but was did:key:"
-//                                    + methodSpecificId + "."));
-
             var debased = multibaseDecoder.apply(encoded);
-
-//            var multicodec = UVarInt.decode(debased);
-//            var uvarintLength = UVarInt.byteLength(multicodec);
-
-//            var publicKey = Arrays.copyOfRange(debased, uvarintLength, debased.length);
 
             return new DidKey(version, methodSpecificId, debased);
         }

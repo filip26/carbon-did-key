@@ -2,8 +2,13 @@ package com.apicatalog.did.key.jwk;
 
 import java.util.Base64;
 import java.util.Base64.Encoder;
+import java.util.Map;
+import java.util.function.Function;
 
+import com.apicatalog.did.DidUrl;
 import com.apicatalog.did.key.DidKey;
+import com.apicatalog.did.key.DidKeyResolver;
+import com.apicatalog.did.primitive.JsonWebKey;
 
 /**
  * A {@link VerificationMethodProvider} that generates verification methods for
@@ -22,12 +27,56 @@ import com.apicatalog.did.key.DidKey;
  * The returned verification methods contain a JWK-formatted public key.
  * </p>
  */
-public class JwkMethodProvider 
-//implements DidKeyResolver.MethodFactory
+public class JwkMethod implements DidKeyResolver.MethodFactory {
 
-{
+    private static final Encoder BASE64_ENCODER = Base64.getUrlEncoder().withoutPadding();
 
-    static final Encoder BASE64_ENCODER = Base64.getUrlEncoder().withoutPadding();
+    private final String typeName;
+    private final Function<byte[], Integer> codecDecoder;
+    private final Map<Integer, JwkGenerator> jwkProviders;
+
+    public JwkMethod(
+            Function<byte[], Integer> codecDecoder,
+            Map<Integer, JwkGenerator> jwkProviders) {
+        this(JsonWebKey.TYPE_NAME, codecDecoder, jwkProviders);
+    }
+
+    public JwkMethod(
+            String typeName,
+            Function<byte[], Integer> codecProvider,
+            Map<Integer, JwkGenerator> jwkProviders) {
+        this.typeName = typeName;
+        this.codecDecoder = codecProvider;
+        this.jwkProviders = jwkProviders;
+    }
+
+    @Override
+    public JsonWebKey createMethod(DidUrl url, DidKey key) {
+
+        var codec = codecDecoder.apply(key.publicKey());
+        if (codec == null) {
+            throw new IllegalArgumentException();
+        }
+
+        final JwkGenerator provider = jwkProviders.get(codec);
+
+        if (provider == null) {
+            throw new IllegalArgumentException("No provider is configured for codec [" + codec + "].");
+        }
+
+        return new JsonWebKey(
+                url,
+                typeName,
+                url.toDid(),
+                null,
+                null,
+                provider.get(key),
+                null);
+    }
+
+    public static class Builder {
+
+    }
 
 //    /** Default provider instance with common key types pre-registered. */
 //    static final JwkMethodProvider DEFAULT = with(KeyCodec.ED25519_PUBLIC_KEY, key -> getJwk("Ed25519", key))
@@ -76,17 +125,10 @@ public class JwkMethodProvider
 //    @Override
 //    public VerificationMethod createMethod(DidUrl id, DidKey key) {
 //
-////        final JwkProvider provider = jwkProviders.get(key.codec());
-////
-////        if (provider == null) {
-////            throw new IllegalArgumentException("Curve type [" + key.codec() + "] is not supported.");
-////        }
-////
-////        return DidVerificationMethod.jwk(
-////                id,
-////                type,
-////                key,
-////                provider.get(key));
+    //// final JwkProvider provider = jwkProviders.get(key.codec()); / / if
+    /// (provider == null) { / throw new IllegalArgumentException("Curve type [" +
+    /// key.codec() + "] is not supported."); / } / / return
+    /// DidVerificationMethod.jwk( / id, / type, / key, / provider.get(key));
 //        return null;//TODO
 //    }
 //
@@ -101,7 +143,7 @@ public class JwkMethodProvider
 //        Map<String, Object> jwk = new LinkedHashMap<>();
 //        jwk.put("kty", "OKP");
 //        jwk.put("crv", curveType);
-////FIXME        jwk.put("x", BASE64_ENCODER.encodeToString(key.decoded()));
+    //// FIXME jwk.put("x", BASE64_ENCODER.encodeToString(key.decoded()));
 //        return Collections.unmodifiableMap(jwk);
 //    }
 //
@@ -117,13 +159,15 @@ public class JwkMethodProvider
 //    public static final Map<String, Object> getECJwk(String curve, String curveSpecName, DidKey key, int length) {
 //
 //        try {
-////FIXME            final ECPoint point = decompress(curveSpecName, key.decoded());
+    //// FIXME final ECPoint point = decompress(curveSpecName, key.decoded());
 //
 //            final Map<String, Object> jwk = new LinkedHashMap<>();
 //            jwk.put("kty", "EC");
 //            jwk.put("crv", curve);
-////            jwk.put("x", BASE64_ENCODER.encodeToString(normalize(point.getAffineX().toByteArray(), length)));
-////            jwk.put("y", BASE64_ENCODER.encodeToString(normalize(point.getAffineY().toByteArray(), length)));
+    //// jwk.put("x",
+    /// BASE64_ENCODER.encodeToString(normalize(point.getAffineX().toByteArray(),
+    /// length))); / jwk.put("y",
+    /// BASE64_ENCODER.encodeToString(normalize(point.getAffineY().toByteArray(), length)));
 //            return Collections.unmodifiableMap(jwk);
 //
 //        } catch (Exception e) {

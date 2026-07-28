@@ -134,7 +134,7 @@ public class DidKeyResolver implements
         return Optional.empty();
     }
 
-    public static Builder builder() {
+    public static Builder newBuilder() {
         return new Builder();
     }
 
@@ -170,10 +170,9 @@ public class DidKeyResolver implements
 
         /** Registers {@link MultiKey#TYPE_NAME} verification method. */
         public Builder multikey() {
-            this.methods.put(MultiKey.TYPE_NAME, DidKeyResolver::createMultiKey);
-            return this;
+            return method(MultiKey.TYPE_NAME, DidKeyResolver::createMultiKey);
         }
-        
+
         public Builder multibaseDecoder(Function<String, byte[]> multibaseDecoder) {
             this.multibaseDecoder = multibaseDecoder;
             return this;
@@ -213,11 +212,11 @@ public class DidKeyResolver implements
             Collection<VerificationMethod> methods) implements DidDocument {
 
         private static final Set<Relationship> REL = Set.of(
-                DidDocument.Relationship.ASSERTION,
-                DidDocument.Relationship.AUTHENTICATION,
-                DidDocument.Relationship.VERIFICATION,
-                DidDocument.Relationship.CAPABILITY_DELEGATION,
-                DidDocument.Relationship.CAPABILITY_INVOCATION);
+                Relationship.ASSERTION,
+                Relationship.AUTHENTICATION,
+                Relationship.VERIFICATION,
+                Relationship.CAPABILITY_DELEGATION,
+                Relationship.CAPABILITY_INVOCATION);
 
         @Override
         public Set<Relationship> relationships() {

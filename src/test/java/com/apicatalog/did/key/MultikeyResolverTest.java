@@ -12,7 +12,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import com.apicatalog.did.ResolutionException;
+import com.apicatalog.did.DidException;
 import com.apicatalog.did.VerificationMethod;
 import com.apicatalog.multicodec.Multicodec.Tag;
 import com.apicatalog.multicodec.MulticodecDecoder;
@@ -26,7 +26,7 @@ class MultikeyResolverTest {
     @DisplayName("resolve()")
     @ParameterizedTest(name = "{0}")
     @MethodSource({ "vectors" })
-    void resolve(URI did) throws ResolutionException {
+    void resolve(URI did) throws DidException {
 
 //        final DidKey didKey = DidKey.from(did);
 

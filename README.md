@@ -11,24 +11,16 @@ It can also be used for testing and local development where a simple, self-conta
 [![Java 25 CI](https://github.com/filip26/carbon-did-key/actions/workflows/java25-build.yml/badge.svg)](https://github.com/filip26/carbon-did-key/actions/workflows/java25-build.yml)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/7f783f2e5d0b4fc6a08094d312a58309)](https://app.codacy.com/gh/filip26/carbon-did-key/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![javadoc](https://javadoc.io/badge2/com.apicatalog/carbon-did-key/javadoc.svg)](https://javadoc.io/doc/com.apicatalog/carbon-did-key)
-[![Maven Central](https://img.shields.io/maven-central/v/com.apicatalog/carbon-did-key.svg?label=Maven%20Central)](https://search.maven.org/artifact/com.apicatalog/carbon-did-key)
+[![Maven Central](https://img.shields.io/maven-central/v/com.apicatalog/carbon-did-key.svg?label=Maven%20Central)](https://mvnrepository.com/artifact/com.apicatalog/carbon-did-key)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 ## ✨ Features
 
 - Deliberate engineering; zero vibe coding.
-- Full conformance with specifications.
-- Minimal external dependencies.
+- Modular, fully configurable, and extensible.
+- Zero third-party dependencies, `did-core` only.
 
-## Examples
-
-```javascript
-
-```
-
-## Installation
-
-### Maven
+## 📦 Installation
 
 ```xml
 <dependency>
@@ -39,7 +31,6 @@ It can also be used for testing and local development where a simple, self-conta
 
 ```
 
-
 ## 🤝 Contributing
 
 Contributions of all kinds are welcome - whether it’s code, documentation, testing, or community support! Please open PR or issue to get started.
@@ -47,7 +38,6 @@ Contributions of all kinds are welcome - whether it’s code, documentation, tes
 ## 📚 Resources
 
 - [The did:key Method v0.9](https://w3c-ccg.github.io/did-key-spec)
-- [W3C Controlled Identifiers v1.0](https://www.w3.org/TR/cid-1.0/)
 - [W3C Decentralized Identifiers (DIDs) v1.0](https://www.w3.org/TR/did-core/)
 
 ## 💼 Commercial Support
