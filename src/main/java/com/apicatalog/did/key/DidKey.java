@@ -90,10 +90,7 @@ public record DidKey(
 
     @Override
     public final String toString() {
-        if (version == null || DEFAULT_VERSION.equals(version)) {
-            return Did.SCHEME + ":" + METHOD_NAME + ":" + methodSpecificId;
-        }
-        return Did.SCHEME + ":" + METHOD_NAME + ":" + version + ":" + methodSpecificId;
+        return Did.SCHEME + ":" + METHOD_NAME + ":" + methodSpecificId;
     }
 
     /**
