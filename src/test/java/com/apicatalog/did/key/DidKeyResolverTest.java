@@ -1,12 +1,14 @@
 package com.apicatalog.did.key;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.net.URI;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.DisplayName;
@@ -14,21 +16,17 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import com.apicatalog.did.DidException;
+import com.apicatalog.did.DidDocument.Relationship;
 import com.apicatalog.did.DidUrl;
 import com.apicatalog.did.key.jwk.JwkMethodFactory;
 import com.apicatalog.did.primitive.JsonWebKey;
-import com.apicatalog.multibase.Multibase;
+import com.apicatalog.did.primitive.MultiKey;
 import com.apicatalog.multibase.MultibaseDecoder;
 import com.apicatalog.multicodec.codec.KeyCodec;
 import com.apicatalog.uvarint.UVarInt;
 
-@DisplayName("JWK Method Factory")
-class JwkMethodFactoryTest {
-
-    static final DidKey.Parser KEY_PARSER = DidKey.parser(MultibaseDecoder.getInstance(
-            Multibase.BASE_58_BTC,
-            Multibase.BASE_64_URL)::decode);
+@DisplayName("DID Key Resolver")
+class DidKeyResolverTest {
 
     static final JwkMethodFactory FACTORY = JwkMethodFactory.newBuilder()
             .codecDecoder(b -> (int) UVarInt.decode(b))
@@ -39,26 +37,91 @@ class JwkMethodFactoryTest {
                     key -> JwkMethodFactory.Builder.getJwk("Bls12381G2", key.publicKey(), 2, 96))
             .build();
 
+    static final DidKeyResolver KEY_RESOLVER = DidKeyResolver.newBuilder()
+            .multibaseDecoder(MultibaseDecoder.getInstance()::decode)
+            .multikey()
+            .method(JsonWebKey.TYPE_NAME, FACTORY)
+            .build();
+
+    static final Set<Relationship> RELS = Set.of(
+            Relationship.ASSERTION,
+            Relationship.AUTHENTICATION,
+            Relationship.VERIFICATION,
+            Relationship.CAPABILITY_DELEGATION,
+            Relationship.CAPABILITY_INVOCATION);
+
     @ParameterizedTest(name = "{0}")
     @MethodSource({ "vectors" })
-    void createMethod(URI did, Map<String, Object> expected) throws DidException {
+    void resolveMultikey(String did) {
 
-        var didUrl = DidUrl.from(did);
-        var didKey = KEY_PARSER.from(did);
+        var didUrl = DidUrl.parse(did);
 
-        var method = FACTORY.createMethod(didUrl, didKey);
+        var documentWitMetadata = KEY_RESOLVER.resolve(didUrl, Map.of());
+        assertNotNull(documentWitMetadata);
+        assertNull(documentWitMetadata.metadata());
 
-        assertJwkMethod(method, didUrl, expected);
+        var document = documentWitMetadata.document();
+        assertNotNull(document);
+
+        assertEquals(didUrl.toDid(), document.id());
+        assertEquals(List.of(), document.controller());
+        assertEquals(List.of(), document.alsoKnownAs());
+
+        assertEquals(RELS, document.relationships());
+
+        for (var rel : RELS) {
+            var methods = document.methods(rel);
+            assertEquals(1, methods.size());
+            assertMultikeyMethod((MultiKey) methods.iterator().next(), didUrl);
+        }
+
+        assertEquals(List.of(), document.service());
+        assertTrue(document.hasRequiredProperties());
     }
 
-    static void assertJwkMethod(JsonWebKey method, DidUrl url, Map<String, Object> expected) {
+    static void assertMultikeyMethod(MultiKey method, DidUrl url) {
         assertNotNull(method);
         assertEquals(url, method.id());
-        assertEquals(JsonWebKey.TYPE_NAME, method.type());
+        assertEquals(MultiKey.TYPE_NAME, method.type());
         assertEquals(url.toDid(), method.controller());
-        assertEquals(expected, method.publicKeyJwk());
-        assertNull(method.secretKeyJwk());
+        assertArrayEquals(MultibaseDecoder.getInstance().decode(url.methodSpecificId()), method.publicKey());
+        assertNull(method.secretKey());
         assertTrue(method.hasRequiredProperties());
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource({ "vectors" })
+    void resolveJwk(String did, Map<String, Object> expected) {
+
+        var didUrl = DidUrl.parse(did);
+
+        var documentWitMetadata = KEY_RESOLVER.resolve(
+                didUrl,
+                Map.of(
+                        DidKeyResolver.OPTION_PUBLIC_KEY_FORMAT,
+                        JsonWebKey.TYPE_NAME));
+
+        assertNotNull(documentWitMetadata);
+        assertNull(documentWitMetadata.metadata());
+
+        var document = documentWitMetadata.document();
+        assertNotNull(document);
+
+        assertEquals(didUrl.toDid(), document.id());
+        assertEquals(List.of(), document.controller());
+        assertEquals(List.of(), document.alsoKnownAs());
+
+        assertEquals(RELS, document.relationships());
+
+        for (var rel : RELS) {
+            var methods = document.methods(rel);
+            assertEquals(1, methods.size());
+            JwkMethodFactoryTest.assertJwkMethod((JsonWebKey) methods.iterator().next(), didUrl, expected);
+        }
+
+        assertEquals(List.of(), document.service());
+        assertTrue(document.hasRequiredProperties());
+
     }
 
     static Stream<Arguments> vectors() {
@@ -145,4 +208,5 @@ class JwkMethodFactoryTest {
                                 "crv", "Ed25519",
                                 "x", "Zmq-CJA17UpFeVmJ-nIKDuDEhUnoRSNIXFbxyBtCh6Y")));
     }
+
 }
