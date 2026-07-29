@@ -74,7 +74,7 @@ public class JwkMethodFactory implements DidKeyResolver.MethodFactory {
                 url.toDid(),
                 null,
                 null,
-                provider.get(key),
+                provider.createJwk(key),
                 null);
     }
 
@@ -234,15 +234,6 @@ public class JwkMethodFactory implements DidKeyResolver.MethodFactory {
             System.arraycopy(value, 0, out, length - value.length, value.length);
             return out;
         }
-//        static final byte[] normalize(byte[] v, int len) {
-//            if (v.length == len)
-//                return v;
-//            if (v.length == len + 1 && v[0] == 0)
-//                return Arrays.copyOfRange(v, 1, v.length);
-//            byte[] out = new byte[len];
-//            System.arraycopy(v, 0, out, len - v.length, v.length);
-//            return out;
-//        }
 
         /** Decompresses a compressed EC point. */
         static final ECPoint decompress(String curveSpecName, byte[] compressed) {

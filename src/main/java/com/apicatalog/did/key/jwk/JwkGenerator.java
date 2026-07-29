@@ -25,5 +25,5 @@ public interface JwkGenerator {
      * @throws IllegalArgumentException if the key type is unsupported or cannot be
      *                                  converted
      */
-    Map<String, Object> get(DidKey key);
+    Map<String, Object> createJwk(DidKey key);
 }

@@ -52,6 +52,13 @@ public class DidKeyResolver implements
         VerificationMethod createMethod(DidUrl id, DidKey key);
     }
 
+    private static final Set<Relationship> SUPPORTED_RELS = Set.of(
+            Relationship.ASSERTION,
+            Relationship.AUTHENTICATION,
+            Relationship.VERIFICATION,
+            Relationship.CAPABILITY_DELEGATION,
+            Relationship.CAPABILITY_INVOCATION);
+
     public static final String DEFAULT_CONTEXT = "https://www.w3.org/ns/did/v1.1";
 
     public static final String OPTION_PUBLIC_KEY_FORMAT = "publicKeyFormat";
@@ -63,7 +70,8 @@ public class DidKeyResolver implements
     private final Map<String, MethodFactory> methodProviders;
     private final String defaultMethod;
 
-    public DidKeyResolver(DidKey.Parser didKeyParser, Map<String, MethodFactory> methodProviders, String defaultMethod) {
+    public DidKeyResolver(DidKey.Parser didKeyParser, Map<String, MethodFactory> methodProviders,
+            String defaultMethod) {
         this.didKeyParser = didKeyParser;
         this.methodProviders = methodProviders;
         this.defaultMethod = defaultMethod;
@@ -89,7 +97,7 @@ public class DidKeyResolver implements
         }
 
         return new Document.WithMetadata(null,
-                new Document(url.toDid(), List.of(methodProvider.createMethod(url, didKey))));
+                new Document(url.toDid(), SUPPORTED_RELS, List.of(methodProvider.createMethod(url, didKey))));
     }
 
     @Override
@@ -194,7 +202,7 @@ public class DidKeyResolver implements
             if (multibaseDecoder == null) {
                 throw new IllegalArgumentException();
             }
-            
+
             if (methods.isEmpty()) {
                 throw new IllegalStateException("At least one verification method provider must be registered.");
             }
@@ -209,23 +217,12 @@ public class DidKeyResolver implements
 
     private static record Document(
             Did id,
+            Set<Relationship> relationships,
             Collection<VerificationMethod> methods) implements DidDocument {
 
-        private static final Set<Relationship> REL = Set.of(
-                Relationship.ASSERTION,
-                Relationship.AUTHENTICATION,
-                Relationship.VERIFICATION,
-                Relationship.CAPABILITY_DELEGATION,
-                Relationship.CAPABILITY_INVOCATION);
-
         @Override
-        public Set<Relationship> relationships() {
-            return REL;
-        }
-
-        @Override
-        public Collection<VerificationMethod> methods(Relationship relationship) {
-            if (REL.contains(relationship)) {
+        public Collection<VerificationMethod> methods(Relationship rel) {
+            if (relationships.contains(rel)) {
                 return methods;
             }
             return List.of();
