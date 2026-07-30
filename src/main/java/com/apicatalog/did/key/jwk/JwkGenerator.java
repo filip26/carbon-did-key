@@ -15,7 +15,7 @@ import com.apicatalog.did.key.DidKey;
  * </p>
  */
 @FunctionalInterface
-public interface JwkProvider {
+public interface JwkGenerator {
 
     /**
      * Produces a JWK representation of the given {@link DidKey}.
@@ -25,5 +25,5 @@ public interface JwkProvider {
      * @throws IllegalArgumentException if the key type is unsupported or cannot be
      *                                  converted
      */
-    Map<String, Object> get(DidKey key);
+    Map<String, Object> createJwk(DidKey key);
 }

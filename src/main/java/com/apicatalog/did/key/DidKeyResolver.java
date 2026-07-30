@@ -1,253 +1,194 @@
 package com.apicatalog.did.key;
 
-import java.net.URI;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 
 import com.apicatalog.did.Did;
+import com.apicatalog.did.DidDocument;
+import com.apicatalog.did.DidDocument.Relationship;
+import com.apicatalog.did.method.MultiKey;
+import com.apicatalog.did.method.VerificationMethod;
 import com.apicatalog.did.DidUrl;
-import com.apicatalog.did.document.DidDocument;
-import com.apicatalog.did.document.DidVerificationMethod;
-import com.apicatalog.did.key.jwk.DidKeyJwkMethodProvider;
-import com.apicatalog.did.resolver.DidResolutionException;
-import com.apicatalog.did.resolver.DidResolutionException.Code;
-import com.apicatalog.did.resolver.DidResolver;
-import com.apicatalog.did.resolver.ResolvedDidDocument;
-import com.apicatalog.multicodec.MulticodecDecoder;
 
 /**
- * {@link DidResolver} implementation for the {@code did:key} method.
+ * DID resolver implementation for the {@code did:key} method.
  *
  * <p>
- * Resolves {@link DidKey} identifiers into minimal {@link DidDocument}
- * instances containing verification methods derived from the public key
- * material encoded in the DID.
+ * Resolves {@link DidKey} identifiers into {@link DidDocument.WithMetadata}
+ * containing material encoded in the DID.
  * </p>
  *
- * <p>
- * Verification method types can be configured using the {@link Builder}. Common
- * types include:
- * </p>
- * <ul>
- * <li>{@link #MULTIKEY_TYPE} – Multikey</li>
- * <li>{@link #JWK_2020_TYPE} – JsonWebKey2020</li>
- * <li>{@link #JWK_TYPE} – JsonWebKey</li>
- * </ul>
- *
- * @see <a href="https://w3c-ccg.github.io/did-key-spec/">DID Key Method
- *      Specification</a>
  */
-public class DidKeyResolver implements DidResolver {
-
-    /** Verification method type URI for Multikey. */
-    public static String MULTIKEY_TYPE = "https://w3id.org/security#Multikey";
-    /** Verification method type URI for JsonWebKey2020. */
-    public static String JWK_2020_TYPE = "https://w3id.org/security#JsonWebKey2020";
-    /** Verification method type URI for JsonWebKey. */
-    public static String JWK_TYPE = "https://w3id.org/security#JsonWebKey";
-
-    /** Supported multicodecs. */
-    protected final MulticodecDecoder codecs;
-    /** Provider that derives verification methods from a {@link DidKey}. */
-    protected final Function<DidKey, Collection<DidVerificationMethod>> provider;
-    /** Provides unique verification method identifier for the given did:key */
-    protected final Function<DidKey, DidUrl> keyToId;
-    /** Placeholder for optional encryption key derivation support. */
-    protected boolean encryptionKeyDerivation;
-
-    protected DidKeyResolver(final MulticodecDecoder codecs,
-            final Function<DidKey, Collection<DidVerificationMethod>> provider,
-            final Function<DidKey, DidUrl> keyToId) {
-        this.codecs = codecs;
-        this.provider = provider;
-        this.keyToId = keyToId;
-        this.encryptionKeyDerivation = false;
-    }
+public class DidKeyResolver implements
+        VerificationMethod.Resolver,
+        VerificationMethod.Dereferencer,
+        DidDocument.Resolver {
 
     /**
-     * Creates a new {@link Builder} for constructing a {@link DidKeyResolver}.
+     * Provider of {@link VerificationMethod} instances for a given {@link DidKey}.
      *
-     * @param codecs multicodec decoder to use
-     * @return a new {@link Builder} instance
-     * @throws NullPointerException if {@code codecs} is {@code null}
+     * <p>
+     * Implementations create verification methods (e.g., {@code Multikey},
+     * {@code JsonWebKey}) from the DID key and its associated type identifier.
+     * </p>
      */
-    public static Builder with(final MulticodecDecoder codecs) {
-        Objects.requireNonNull(codecs);
-        return new Builder(codecs);
-    }
-
-    /**
-     * Resolves a {@link URI} into a {@link ResolvedDidDocument}.
-     *
-     * @param did the DID URI to resolve
-     * @return the resolved DID document
-     * @throws NullPointerException   if {@code did} is {@code null}
-     * @throws DidResolutionException if resolution fails
-     */
-    public ResolvedDidDocument resolve(final URI did) throws DidResolutionException {
-        Objects.requireNonNull(did, "DID URI must not be null.");
-        try {
-            return resolve(DidKey.of(did, codecs));
-        } catch (IllegalArgumentException e) {
-            throw new DidResolutionException(did.toASCIIString(), "Failed to resolve DID URI: " + did, e);
-        }
-    }
-
-    /**
-     * Resolves a {@link Did} into a {@link ResolvedDidDocument}.
-     *
-     * @param did the DID to resolve
-     * @return the resolved DID document
-     * @throws NullPointerException   if {@code did} is {@code null}
-     * @throws DidResolutionException if resolution fails
-     */
-    @Override
-    public ResolvedDidDocument resolve(final Did did) throws DidResolutionException {
-        Objects.requireNonNull(did, "DID must not be null.");
-
-        if (!DidKey.METHOD_NAME.equals(did.getMethod())) {
-            throw new DidResolutionException(did.toString(),
-                    Code.UnsupportedMethod,
-                    "Unsupported DID method '" + did.getMethod() + "', expected 'key'.");
-        }
-
-        final DidKey didKey;
-        try {
-            didKey = DidKey.of(did, codecs);
-        } catch (IllegalArgumentException e) {
-            throw new DidResolutionException(did.toString(), Code.InvalidDid, "Invalid did:key value: " + did, e);
-        }
-
-        return resolve(didKey);
-    }
-
-    /**
-     * Resolves a {@link DidKey} into a {@link ResolvedDidDocument}.
-     *
-     * @param didKey the DID key to resolve
-     * @return the resolved DID document
-     * @throws NullPointerException   if {@code didKey} is {@code null}
-     * @throws DidResolutionException if resolution fails
-     */
-    public ResolvedDidDocument resolve(final DidKey didKey) throws DidResolutionException {
-        Objects.requireNonNull(didKey, "DidKey must not be null.");
-
-        if (encryptionKeyDerivation) {
-            throw new DidResolutionException(didKey.toString(),
-                    Code.Internal,
-                    "Encryption key derivation is not yet supported.");
-        }
-
-        return ResolvedDidDocument.of(Document.of(didKey, provider.apply(didKey)));
-    }
-
-    /**
-     * Creates a multikey verification method entry for the given DID key.
-     *
-     * @param id   the DID URL uniquely identifying the method
-     * @param key  the DID key
-     * @param type the verification method type
-     * @return a new verification method
-     */
-    public static DidVerificationMethod multikey(final DidUrl id, final DidKey key, final String type) {
-        return DidVerificationMethod.multibase(
-                id,
-                type,
-                key,
-                key);
-    }
-
-    /** @return {@code true} if encryption key derivation is enabled */
-    public boolean encryptionKeyDerivation() {
-        return this.encryptionKeyDerivation;
-    }
-
-    /**
-     * Enables or disables encryption key derivation.
-     *
-     * @param encryptionKeyDerivation flag value
-     * @return this resolver instance
-     */
-    public DidKeyResolver encryptionKeyDerivation(boolean encryptionKeyDerivation) {
-        this.encryptionKeyDerivation = encryptionKeyDerivation;
-        return this;
-    }
-
-    /**
-     * Builder for {@link DidKeyResolver}.
-     */
-    public static class Builder {
-
-        final MulticodecDecoder codecs;
-        final Map<String, VerificationMethodProvider> providers;
-        Function<DidKey, DidUrl> keyToId;
-
-        protected Builder(final MulticodecDecoder codecs) {
-            this.codecs = codecs;
-            this.providers = new LinkedHashMap<>();
-            this.keyToId = key -> DidUrl.fragment(key, key.getMethodSpecificId());
-        }
+    @FunctionalInterface
+    public interface MethodFactory {
 
         /**
-         * Sets the function used to derive the {@link DidUrl} identifier for
-         * verification methods created from a given {@link DidKey}.
+         * Creates a {@link VerificationMethod} for the given {@link DidKey}.
          *
-         * <p>
-         * The mapper is applied during resolution to produce the verification method ID
-         * (for example, mapping a {@code did:key:...} to a fragment
-         * {@code did:key:...#...}). By default, this builder uses
-         * {@code DidUrl.fragment(key, key.getMethodSpecificId())}.
-         * </p>
-         *
-         * @param keyToId mapping from {@link DidKey} to the verification method
-         *                {@link DidUrl}
-         * @return this builder
-         * @throws NullPointerException if {@code keyToId} is {@code null}
+         * @param id  the DID URL uniquely identifying the method
+         * @param key the DID key to build a verification method from, must not be
+         *            {@code null}
+         * @return a new {@link VerificationMethod} instance
          */
-        public Builder verificationMethodId(Function<DidKey, DidUrl> keyToId) {
-            this.keyToId = Objects.requireNonNull(keyToId, "keyToId must not be null");
-            return this;
+        VerificationMethod createMethod(DidUrl id, DidKey key);
+    }
+
+    private static final Set<Relationship> SUPPORTED_RELS = Set.of(
+            Relationship.ASSERTION,
+            Relationship.AUTHENTICATION,
+            Relationship.VERIFICATION,
+            Relationship.CAPABILITY_DELEGATION,
+            Relationship.CAPABILITY_INVOCATION);
+
+    public static final String DEFAULT_CONTEXT = "https://www.w3.org/ns/did/v1.1";
+
+    public static final String OPTION_PUBLIC_KEY_FORMAT = "publicKeyFormat";
+    public static final String OPTION_EXPERIMENTAL_KEY_TYPES = "enableExperimentalPublicKeyTypes";
+    public static final String OPTION_DEFAULT_CONTEXT = "defaultContext";
+    public static final String OPTION_ENCRYPTION_KEY_DERIVATION = "encryptionKeyDerivation";
+
+    private final DidKey.Parser didKeyParser;
+    private final Map<String, MethodFactory> methodProviders;
+    private final String defaultMethod;
+
+    public DidKeyResolver(DidKey.Parser didKeyParser, Map<String, MethodFactory> methodProviders,
+            String defaultMethod) {
+        this.didKeyParser = didKeyParser;
+        this.methodProviders = methodProviders;
+        this.defaultMethod = defaultMethod;
+    }
+
+    @Override
+    public DidDocument.WithMetadata resolve(DidUrl url, Map<String, Object> options) {
+        if (!DidKey.isDidKey(url)) {
+            throw new IllegalArgumentException();
+        }
+
+        if (url.query() != null || url.path() != null) {
+            throw new IllegalArgumentException();
+        }
+        var didKey = didKeyParser.from(url.methodSpecificId());
+
+        var type = options.getOrDefault(OPTION_PUBLIC_KEY_FORMAT, defaultMethod);
+
+        var methodProvider = methodProviders.get(type);
+
+        if (methodProvider == null) {
+            throw new IllegalArgumentException();
+        }
+
+        return new Document.WithMetadata(null,
+                new Document(url.toDid(), SUPPORTED_RELS, List.of(methodProvider.createMethod(url, didKey))));
+    }
+
+    @Override
+    public Optional<VerificationMethod> resolveMethod(DidUrl url, Relationship rel, Map<String, Object> options) {
+
+        if (url.fragment() == null || url.fragment().isBlank()) {
+            throw new IllegalArgumentException();
+        }
+
+        var didKey = didKeyParser.from(url.methodSpecificId());
+
+        var type = options.getOrDefault(OPTION_PUBLIC_KEY_FORMAT, defaultMethod);
+
+        var methodProvider = methodProviders.get(type);
+
+        if (methodProvider == null) {
+            throw new IllegalArgumentException();
+        }
+
+        return Optional.of(methodProvider.createMethod(url, didKey));
+    }
+
+    @Override
+    public Optional<VerificationMethod> findMethod(DidDocument document, DidUrl url, Relationship rel) {
+
+        if (url.fragment() == null || url.fragment().isBlank()) {
+            throw new IllegalArgumentException();
+        }
+
+        var methods = document.methods(rel);
+
+        if (methods == null || methods.isEmpty()) {
+            return Optional.empty();
+        }
+
+        for (var method : methods) {
+            if (method.id().equals(url)) {
+                return Optional.of(method);
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    public static Builder newBuilder() {
+        return new Builder();
+    }
+
+    private static MultiKey createMultiKey(DidUrl url, DidKey key) {
+        return new MultiKey(url, MultiKey.TYPE_NAME, url.toDid(), null, null, key.publicKey(), null);
+    }
+
+    public static class Builder {
+
+        private Function<String, byte[]> multibaseDecoder;
+        private final Map<String, MethodFactory> methods;
+        private String defaultMethod;
+
+        private Builder() {
+            this.methods = new LinkedHashMap<>();
+            this.defaultMethod = null;
         }
 
         /**
          * Registers a verification method type and provider.
          *
-         * @param methodType verification method type URI
-         * @param provider   provider implementation
+         * @param type    verification method type name
+         * @param factory provider implementation
          * @return this builder
          * @throws NullPointerException if any argument is {@code null}
          */
-        public Builder method(String methodType, VerificationMethodProvider provider) {
-            Objects.requireNonNull(methodType, "Verification method type must not be null.");
-            Objects.requireNonNull(provider, "Verification method provider must not be null.");
-            providers.put(methodType, provider);
+        public Builder method(String type, MethodFactory factory) {
+            Objects.requireNonNull(type, "Verification method type must not be null.");
+            Objects.requireNonNull(factory, "Verification method provider must not be null.");
+            methods.put(type, factory);
             return this;
         }
 
-        /** Registers {@link #MULTIKEY_TYPE} verification methods. */
+        /** Registers {@link MultiKey#TYPE_NAME} verification method. */
         public Builder multikey() {
-            return multibase(MULTIKEY_TYPE);
+            return method(MultiKey.TYPE_NAME, DidKeyResolver::createMultiKey);
         }
 
-        /** Registers a multibase verification method under the given type URI. */
-        public Builder multibase(String methodType) {
-            return method(methodType, DidKeyResolver::multikey);
+        public Builder multibaseDecoder(Function<String, byte[]> multibaseDecoder) {
+            this.multibaseDecoder = multibaseDecoder;
+            return this;
         }
 
-        /** Registers {@link #JWK_TYPE} verification methods. */
-        public Builder jwk() {
-            return jwk(JWK_TYPE);
-        }
-
-        /** Registers a JWK verification method under the given type URI. */
-        public Builder jwk(String methodType) {
-            return method(methodType, DidKeyJwkMethodProvider.getInstance());
+        public Builder defaultMethod(String type) {
+            this.defaultMethod = type;
+            return this;
         }
 
         /**
@@ -257,83 +198,34 @@ public class DidKeyResolver implements DidResolver {
          * @throws IllegalStateException if no providers were registered
          */
         public DidKeyResolver build() {
-            if (providers.isEmpty()) {
+
+            if (multibaseDecoder == null) {
+                throw new IllegalArgumentException();
+            }
+
+            if (methods.isEmpty()) {
                 throw new IllegalStateException("At least one verification method provider must be registered.");
             }
-            if (providers.size() == 1) {
-                final Entry<String, VerificationMethodProvider> provider = providers.entrySet().iterator().next();
-                return new DidKeyResolver(
-                        codecs,
-                        key -> Collections.singleton(provider.getValue().get(keyToId.apply(key), key, provider.getKey())),
-                        keyToId);
+
+            if (defaultMethod == null) {
+                defaultMethod = methods.keySet().iterator().next();
             }
-            return new DidKeyResolver(
-                    codecs,
-                    key -> createSignatureMethods(key, providers, keyToId),
-                    keyToId);
+
+            return new DidKeyResolver(DidKey.parser(multibaseDecoder), Map.copyOf(methods), defaultMethod);
         }
     }
 
-    static final Collection<DidVerificationMethod> createSignatureMethods(
-            DidKey didKey,
-            Map<String, VerificationMethodProvider> providers,
-            Function<DidKey, DidUrl> keyToId) {
-
-        Objects.requireNonNull(didKey, "DidKey must not be null.");
-        Objects.requireNonNull(providers, "Verification method providers must not be null.");
-
-        Collection<DidVerificationMethod> methods = new ArrayList<>(providers.size());
-        for (Entry<String, VerificationMethodProvider> provider : providers.entrySet()) {
-            methods.add(provider.getValue().get(keyToId.apply(didKey), didKey, provider.getKey()));
-        }
-        return Collections.unmodifiableCollection(methods);
-    }
-
-    /**
-     * Minimal DID Document implementation used by {@link DidKeyResolver}.
-     */
-    static final class Document implements DidDocument {
-
-        final Did id;
-        final Collection<DidVerificationMethod> method;
-
-        Document(Did id, Collection<DidVerificationMethod> method) {
-            this.id = Objects.requireNonNull(id, "DID must not be null.");
-            this.method = Objects.requireNonNull(method, "Verification methods must not be null.");
-        }
-
-        public static Document of(Did id, Collection<DidVerificationMethod> methods) {
-            return new Document(id, methods);
-        }
+    private static record Document(
+            Did id,
+            Set<Relationship> relationships,
+            Collection<VerificationMethod> methods) implements DidDocument {
 
         @Override
-        public Did id() {
-            return id;
-        }
-
-        @Override
-        public Collection<DidVerificationMethod> verification() {
-            return method;
-        }
-
-        @Override
-        public Collection<DidVerificationMethod> authentication() {
-            return method;
-        }
-
-        @Override
-        public Collection<DidVerificationMethod> assertion() {
-            return method;
-        }
-
-        @Override
-        public Collection<DidVerificationMethod> capabilityInvocation() {
-            return method;
-        }
-
-        @Override
-        public Collection<DidVerificationMethod> capabilityDelegation() {
-            return method;
+        public Collection<VerificationMethod> methods(Relationship rel) {
+            if (relationships.contains(rel)) {
+                return methods;
+            }
+            return List.of();
         }
     }
 }
