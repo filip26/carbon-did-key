@@ -17,10 +17,10 @@ import com.apicatalog.did.method.VerificationMethod;
 import com.apicatalog.did.DidUrl;
 
 /**
- * {@link DidResolver} implementation for the {@code did:key} method.
+ * DID resolver implementation for the {@code did:key} method.
  *
  * <p>
- * Resolves {@link DidKey} identifiers into minimal {@link DidResource}
+ * Resolves {@link DidKey} identifiers into {@link DidDocument.WithMetadata}
  * containing material encoded in the DID.
  * </p>
  *
