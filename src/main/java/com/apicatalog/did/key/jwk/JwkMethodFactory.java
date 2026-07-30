@@ -18,7 +18,7 @@ import java.util.function.Function;
 import com.apicatalog.did.DidUrl;
 import com.apicatalog.did.key.DidKey;
 import com.apicatalog.did.key.DidKeyResolver;
-import com.apicatalog.did.primitive.JsonWebKey;
+import com.apicatalog.did.method.JsonWebKey;
 
 /**
  * A {@link JwkMethodFactory} that creates verification methods for

@@ -17,7 +17,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import com.apicatalog.did.DidException;
 import com.apicatalog.did.DidUrl;
 import com.apicatalog.did.key.jwk.JwkMethodFactory;
-import com.apicatalog.did.primitive.JsonWebKey;
+import com.apicatalog.did.method.JsonWebKey;
 import com.apicatalog.multibase.Multibase;
 import com.apicatalog.multibase.MultibaseDecoder;
 import com.apicatalog.multicodec.codec.KeyCodec;

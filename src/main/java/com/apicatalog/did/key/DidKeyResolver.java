@@ -12,9 +12,9 @@ import java.util.function.Function;
 import com.apicatalog.did.Did;
 import com.apicatalog.did.DidDocument;
 import com.apicatalog.did.DidDocument.Relationship;
+import com.apicatalog.did.method.MultiKey;
+import com.apicatalog.did.method.VerificationMethod;
 import com.apicatalog.did.DidUrl;
-import com.apicatalog.did.VerificationMethod;
-import com.apicatalog.did.primitive.MultiKey;
 
 /**
  * {@link DidResolver} implementation for the {@code did:key} method.
@@ -147,7 +147,7 @@ public class DidKeyResolver implements
     }
 
     private static MultiKey createMultiKey(DidUrl url, DidKey key) {
-        return new MultiKey(url, url.toDid(), null, null, key.publicKey(), null);
+        return new MultiKey(url, MultiKey.TYPE_NAME, url.toDid(), null, null, key.publicKey(), null);
     }
 
     public static class Builder {
@@ -164,7 +164,7 @@ public class DidKeyResolver implements
         /**
          * Registers a verification method type and provider.
          *
-         * @param type    verification method type URI
+         * @param type    verification method type name
          * @param factory provider implementation
          * @return this builder
          * @throws NullPointerException if any argument is {@code null}

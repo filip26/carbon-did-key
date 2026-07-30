@@ -6,7 +6,7 @@
  * <ul>
  * <li>{@link com.apicatalog.did.key.jwk.JwkMethodFactory} – a provider that maps
  * supported {@code did:key} codecs to
- * {@link com.apicatalog.did.primitive.JsonWebKey}.</li>
+ * {@link com.apicatalog.did.method.JsonWebKey}.</li>
  * <li>{@link com.apicatalog.did.key.jwk.JwkGenerator} – a functional interface
  * for custom JWK generation strategies.</li>
  * </ul>
