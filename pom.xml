@@ -7,7 +7,7 @@
     <groupId>com.apicatalog</groupId>
     <artifactId>carbon-did-key</artifactId>
 
-    <version>0.11.0-SNAPSHOT</version>
+    <version>0.11.0</version>
     <packaging>jar</packaging>
 
     <url>https://github.com/filip26/carbon-did-key</url>
@@ -62,7 +62,7 @@
         <!-- test resources -->
         <copper.multicodec.version>4.0.0</copper.multicodec.version>
         <copper.multibase.version>4.1.0</copper.multibase.version>
-        <junit.version>6.1.0</junit.version>
+        <junit.version>6.1.2</junit.version>
     </properties>
     <dependencies>
         <dependency>
@@ -70,6 +70,7 @@
             <artifactId>carbon-did</artifactId>
             <version>${carbon.did.version}</version>
         </dependency>
+        <!-- Tests -->
         <dependency>
             <groupId>com.apicatalog</groupId>
             <artifactId>copper-multibase</artifactId>
@@ -82,8 +83,6 @@
             <version>${copper.multicodec.version}</version>
             <scope>test</scope>
         </dependency>
-
-        <!-- Tests -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
